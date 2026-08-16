@@ -489,7 +489,7 @@ export const AdminPanel: React.FC = () => {
                         </span>
                         {order.sendPreDispatchPhoto ? (
                           <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">
-                            درخواست شده توسط مشتری ({order.preDispatchPhotoChannel === 'whatsapp' ? 'واتس‌اپ' : order.preDispatchPhotoChannel === 'telegram' ? 'تلگرام' : 'پیامک'})
+                            درخواست شده توسط مشتری (مشاهده در پنل کاربری)
                           </span>
                         ) : (
                           <span className="text-[10px] bg-stone-100 text-stone-600 font-medium px-2 py-0.5 rounded">
@@ -544,12 +544,12 @@ export const AdminPanel: React.FC = () => {
                           onClick={() => {
                             const photoUrl = order.preDispatchPhotoUrl || order.items[0]?.product?.image;
                             updateOrder(order.id, { preDispatchPhotoUrl: photoUrl });
-                            showToast(`عکس گل‌آرایی برای شماره ${order.preDispatchPhotoNumber || order.recipientPhone} ارسال شد.`, 'success');
+                            showToast(`عکس گل‌آرایی برای مشتری به پنل کاربری ارسال شد.`, 'success');
                             sendNotification(
                               'sms',
                               'عکس گل‌آرایی سفارش شما آماده شد',
-                              `خریدار گرامی، عکس دسته گل/محصول سفارش ${order.trackingCode} جهت تایید نهایی آماده شد. جهت مشاهده و تایید وارد سامانه رهگیری شوید: ${photoUrl}`,
-                              order.preDispatchPhotoNumber || order.recipientPhone
+                              `خریدار گرامی، عکس دسته گل/محصول سفارش ${order.trackingCode} جهت تایید نهایی آماده شد. جهت مشاهده و تایید وارد پنل کاربری خود (بخش رهگیری سفارش) شوید.`,
+                              order.recipientPhone
                             );
                           }}
                           className="w-full py-2 px-3 bg-[#2D5A27] hover:bg-[#1F3F1B] text-white text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"

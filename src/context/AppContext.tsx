@@ -245,6 +245,66 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {}
   }, [dispatchedNotifications]);
 
+  // Handle Zarinpal Payment Verification Callback
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const authority = queryParams.get('Authority');
+    const status = queryParams.get('Status');
+    const orderId = queryParams.get('order_id');
+    const verifyPayment = queryParams.get('payment_verify');
+
+    if (verifyPayment && orderId) {
+      // Find the order
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+
+      if (status === 'OK' && authority) {
+        showToast('در حال بررسی و تایید پرداخت از سمت بانک...', 'info');
+        
+        // Verify via backend API
+        fetch('/api/payment/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            authority,
+            amount: order.finalAmount
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success || data.code === 101) {
+            updateOrderStatus(order.id, 'paid', data.ref_id?.toString() || authority);
+            triggerCelebration();
+            showToast(`سفارش شما با کد پیگیری ${order.trackingCode} با موفقیت ثبت شد!`, 'success');
+            clearCart();
+            setIsTrackingModalOpen(true);
+            
+            sendNotification(
+              'sms',
+              'سفارش شما با موفقیت ثبت شد',
+              `سفارش شما در گل آریس ثبت شد. کد پیگیری: ${order.trackingCode}\nمبلغ: ${order.finalAmount.toLocaleString('fa-IR')} تومان.`,
+              order.recipientPhone
+            );
+          } else {
+            updateOrderStatus(order.id, 'cancelled');
+            showToast(data.message || 'خطا در تایید نهایی پرداخت. در صورت کسر وجه، بازگشت داده خواهد شد.', 'error');
+            sendNotification('sms', 'خطای پرداخت سفارش', `تراکنش سفارش ${order.trackingCode} ناموفق بود.`, order.recipientPhone);
+          }
+        })
+        .catch(err => {
+          console.error('Verify error:', err);
+          showToast('خطا در برقراری ارتباط با سرور.', 'error');
+        });
+      } else {
+        updateOrderStatus(order.id, 'cancelled');
+        showToast('تراکنش توسط شما لغو شد یا با شکست مواجه گردید.', 'error');
+      }
+
+      // Clean up URL without refreshing
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [orders]); // Needs orders dependency or to be careful. Wait, if it depends on orders, it will run again. But we clear query string! So it's safe.
+
   const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { id, message, type }]);

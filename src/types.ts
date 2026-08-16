@@ -184,8 +184,6 @@ export interface Order {
   notes?: string;
   // Pre-dispatch photo inspection option
   sendPreDispatchPhoto?: boolean;
-  preDispatchPhotoChannel?: 'sms' | 'whatsapp' | 'telegram';
-  preDispatchPhotoNumber?: string;
   preDispatchPhotoUrl?: string;
   preDispatchPhotoApproved?: boolean;
   preDispatchPhotoFeedback?: string;
