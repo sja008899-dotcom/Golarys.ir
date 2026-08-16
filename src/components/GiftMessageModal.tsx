@@ -10,6 +10,7 @@ import {
   Check, 
   Flower2 
 } from 'lucide-react';
+import { GolarysLogo } from './GolarysLogo';
 
 const inspirationTemplates = [
   {
@@ -224,13 +225,13 @@ export const GiftMessageModal: React.FC = () => {
               
               {/* Decorative stamp / wax seal */}
               <div className="absolute top-4 left-4 flex items-center gap-1">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center shadow-md text-sm font-bold ${
-                  cardTheme === 'gold' ? 'bg-[#D4AF37] text-white' :
-                  cardTheme === 'emerald' ? 'bg-[#2D5A27] text-white' :
-                  cardTheme === 'rose' ? 'bg-rose-500 text-white' :
-                  'bg-stone-800 text-white'
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md p-1 ${
+                  cardTheme === 'gold' ? 'bg-[#D4AF37] text-white ring-2 ring-[#D4AF37]/30' :
+                  cardTheme === 'emerald' ? 'bg-[#2D5A27] text-white ring-2 ring-[#2D5A27]/30' :
+                  cardTheme === 'rose' ? 'bg-rose-500 text-white ring-2 ring-rose-300' :
+                  'bg-stone-800 text-white ring-2 ring-stone-400'
                 }`}>
-                  🌸
+                  <GolarysLogo size="sm" iconOnly={true} variant="light" />
                 </div>
               </div>
 

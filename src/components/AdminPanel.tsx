@@ -15,10 +15,22 @@ import {
   FileText,
   Package,
   Store,
-  Flower2
+  Flower2,
+  Lock,
+  LogOut,
+  Truck,
+  CheckCircle2,
+  Clock,
+  Phone,
+  MapPin,
+  ShieldCheck,
+  Search,
+  MessageSquare
 } from 'lucide-react';
-import { SiteContent, Product, BlogPost } from '../types';
+import { SiteContent, Product, BlogPost, OrderStatus } from '../types';
 import { sampleVendors } from '../data/initialContent';
+import { GolarysLogo } from './GolarysLogo';
+import { toPersianDigits } from '../lib/formatters';
 
 export const AdminPanel: React.FC = () => {
   const { 
@@ -28,16 +40,24 @@ export const AdminPanel: React.FC = () => {
     addProduct, 
     addBlogPost, 
     showToast,
-    setActiveTab
+    setActiveTab,
+    isAdminAuthenticated,
+    adminLogin,
+    adminLogout,
+    orders,
+    updateOrderStatus,
+    sendNotification
   } = useApp();
 
-  const [activeSubTab, setActiveSubTab] = useState<'content_editor' | 'add_product' | 'add_blog' | 'decap_cms' | 'zip_builder'>('content_editor');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [activeSubTab, setActiveSubTab] = useState<'orders_manager' | 'content_editor' | 'add_product' | 'add_blog' | 'decap_cms' | 'zip_builder'>('orders_manager');
   
   // Local editable draft for siteContent
   const [draftContent, setDraftContent] = useState<SiteContent>(siteContent);
   const [jsonString, setJsonString] = useState<string>(JSON.stringify(siteContent, null, 2));
   const [isJsonMode, setIsJsonMode] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [orderSearch, setOrderSearch] = useState('');
 
   // New product form
   const [newProd, setNewProd] = useState({
@@ -62,6 +82,74 @@ export const AdminPanel: React.FC = () => {
     author: 'کارشناس باغبانی گل آریس',
     tags: 'نگهداری گل, ترفند'
   });
+
+  const handleAdminPasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    adminLogin(passwordInput);
+  };
+
+  // If not authenticated, render password lock screen
+  if (!isAdminAuthenticated) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center p-4">
+        <div className="bg-white max-w-md w-full rounded-3xl shadow-2xl border border-stone-200 overflow-hidden">
+          
+          <div className="bg-gradient-to-l from-[#1F3F1B] to-[#2D5A27] text-white p-8 text-center space-y-3">
+            <GolarysLogo size="md" iconOnly={false} variant="light" />
+            <div className="pt-2">
+              <div className="w-12 h-12 bg-white/10 text-[#D4AF37] rounded-2xl flex items-center justify-center mx-auto border border-white/20 mb-2">
+                <Lock className="w-6 h-6" />
+              </div>
+              <h2 className="text-lg font-black font-heading text-white">
+                ورود به پنل مدیریت گل آریس
+              </h2>
+              <p className="text-xs text-stone-200">
+                جهت دسترسی به سفارش‌های شاپرک و مدیریت سیستم رمز ورود را وارد کنید
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleAdminPasswordSubmit} className="p-6 sm:p-8 space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-stone-700 mb-1.5">
+                رمز عبور مدیریت:
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  required
+                  placeholder="رمز ورود مدیر..."
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="w-full pl-4 pr-10 py-3 bg-stone-50 border border-stone-300 rounded-xl text-sm font-bold text-stone-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2D5A27]"
+                />
+                <Lock className="w-4 h-4 text-stone-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 bg-[#2D5A27] hover:bg-[#1F3F1B] text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
+              <span>تایید و ورود به مدیریت</span>
+            </button>
+
+            <div className="pt-3 text-center border-t border-stone-100">
+              <button
+                type="button"
+                onClick={() => setActiveTab('home')}
+                className="text-xs text-stone-500 hover:text-stone-900 underline cursor-pointer"
+              >
+                بازگشت به فروشگاه
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    );
+  }
 
   const handleSaveContent = () => {
     if (isJsonMode) {
@@ -143,23 +231,28 @@ export const AdminPanel: React.FC = () => {
     setActiveTab('blog');
   };
 
-  const handleDownloadJson = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(siteContent, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "site-content.json");
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-    showToast('فایل site-content.json دانلود شد.', 'success');
+  const handleStatusChange = (orderId: string, newStatus: OrderStatus, recipientPhone: string, code: string) => {
+    updateOrderStatus(orderId, newStatus);
+    showToast(`وضعیت سفارش ${code} به روز شد.`, 'success');
+
+    let statusFa = 'در حال آماده‌سازی و چینش گل';
+    if (newStatus === 'gift_wrapping') statusFa = 'بسته‌بندی هدیه و درج کارت دست‌نویس';
+    if (newStatus === 'delivering') statusFa = 'تحویل به سفیر و در مسیر ارسال';
+    if (newStatus === 'delivered') statusFa = 'تحویل داده شده به گیرنده';
+
+    sendNotification(
+      'sms',
+      'تغییر وضعیت سفارش گل آریس',
+      `وضعیت سفارش ${code} به روز شد: ${statusFa}. جهت پیگیری لحظه‌ای به golarys.ir مراجعه فرمایید.`,
+      recipientPhone
+    );
   };
 
-  const handleCopyJson = () => {
-    navigator.clipboard.writeText(JSON.stringify(siteContent, null, 2));
-    setCopied(true);
-    showToast('کد JSON در کلیپ‌بورد کپی شد.', 'success');
-    setTimeout(() => setCopied(false), 3000);
-  };
+  const filteredOrders = orders.filter((o) =>
+    o.trackingCode.toLowerCase().includes(orderSearch.toLowerCase()) ||
+    o.recipientName.toLowerCase().includes(orderSearch.toLowerCase()) ||
+    o.recipientPhone.includes(orderSearch)
+  );
 
   return (
     <div className="py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -167,20 +260,18 @@ export const AdminPanel: React.FC = () => {
       {/* Top Banner */}
       <div className="bg-[#1F3F1B] text-white p-6 sm:p-8 rounded-3xl shadow-xl flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-[#2D5A27] text-[#D4AF37] flex items-center justify-center font-bold">
-            <SlidersHorizontal className="w-6 h-6" />
-          </div>
+          <GolarysLogo size="md" iconOnly={true} variant="light" />
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-black font-heading">
-                پنل مدیریت محتوا و تنظیمات Decap CMS
+                پنل مدیریت جامع گل آریس
               </h1>
               <span className="text-[10px] font-bold bg-[#D4AF37] text-[#1F3F1B] px-2 py-0.5 rounded">
-                Live Studio
+                مدیر سامانه
               </span>
             </div>
             <p className="text-xs text-stone-300 mt-0.5">
-              ویرایش زنده متون سایت، افزودن گل‌های جدید، مدیریت مقالات بلاگ و ساخت خروجی ZIP
+              مدیریت سفارش‌های شاپرک، تغییر وضعیت ارسال، بروزرسانی متون سایت و محصولات
             </p>
           </div>
         </div>
@@ -191,13 +282,32 @@ export const AdminPanel: React.FC = () => {
             className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl cursor-pointer transition-colors flex items-center gap-1.5"
           >
             <Eye className="w-4 h-4" />
-            <span>مشاهده زنده سایت</span>
+            <span>مشاهده فروشگاه</span>
+          </button>
+          <button
+            onClick={adminLogout}
+            className="px-4 py-2 bg-rose-600/80 hover:bg-rose-600 text-white font-bold text-xs rounded-xl cursor-pointer transition-colors flex items-center gap-1.5"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>خروج از پنل</span>
           </button>
         </div>
       </div>
 
       {/* Navigation Sub-Tabs */}
       <div className="flex flex-wrap gap-2 border-b border-stone-200 pb-2">
+        <button
+          onClick={() => setActiveSubTab('orders_manager')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            activeSubTab === 'orders_manager'
+              ? 'bg-[#2D5A27] text-white shadow-xs'
+              : 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50'
+          }`}
+        >
+          <Package className="w-4 h-4 text-[#D4AF37]" />
+          <span>سفارش‌های دریافتی و شاپرک ({toPersianDigits(orders.length)})</span>
+        </button>
+
         <button
           onClick={() => setActiveSubTab('content_editor')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
@@ -207,7 +317,7 @@ export const AdminPanel: React.FC = () => {
           }`}
         >
           <FileText className="w-4 h-4 text-[#D4AF37]" />
-          <span>ویرایشگر محتوای سایت (site-content.json)</span>
+          <span>ویرایشگر متون سایت</span>
         </button>
 
         <button
@@ -231,7 +341,7 @@ export const AdminPanel: React.FC = () => {
           }`}
         >
           <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-          <span>انتشار مقاله جدید در بلاگ</span>
+          <span>انتشار مقاله بلاگ</span>
         </button>
 
         <button
@@ -243,7 +353,7 @@ export const AdminPanel: React.FC = () => {
           }`}
         >
           <Layers className="w-4 h-4 text-[#D4AF37]" />
-          <span>پیکربندی Decap CMS (config.yml)</span>
+          <span>پیکربندی Decap CMS</span>
         </button>
 
         <button
@@ -254,447 +364,445 @@ export const AdminPanel: React.FC = () => {
               : 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50'
           }`}
         >
-          <Package className="w-4 h-4 text-[#D4AF37]" />
-          <span>اسکریپت build-zip.sh و سرور</span>
+          <Download className="w-4 h-4 text-[#D4AF37]" />
+          <span>خروجی ZIP و استقرار سرور</span>
         </button>
       </div>
 
-      {/* 1. Main Site Content Editor Tab */}
-      {activeSubTab === 'content_editor' && (
+      {/* 0. Orders Management Sub-Tab */}
+      {activeSubTab === 'orders_manager' && (
         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-md space-y-6">
-          
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-stone-100 pb-4">
             <div>
-              <h3 className="text-lg font-bold text-[#1F3F1B] font-heading">
-                ویرایش متون، پیام‌ها و ارزش‌های سایت
+              <h3 className="text-xl font-bold text-[#1F3F1B] font-heading">
+                مدیریت سفارش‌ها و تراکنش‌های بانکی شاپرک
               </h3>
               <p className="text-xs text-stone-500">
-                هرگونه تغییر در این بخش بلافاصله در صفحه اصلی و کل سایت منعکس می‌شود
+                مشاهده فاکتورها، تغییر وضعیت چرخه گل‌آرایی و ارسال پیامک خودکار به خریداران
+              </p>
+            </div>
+
+            <div className="relative w-full sm:w-72">
+              <input
+                type="text"
+                placeholder="جستجو با کد پیگیری، نام یا شماره..."
+                value={orderSearch}
+                onChange={(e) => setOrderSearch(e.target.value)}
+                className="w-full pl-3 pr-9 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#2D5A27]"
+              />
+              <Search className="w-4 h-4 text-stone-400 absolute right-3 top-1/2 -translate-y-1/2" />
+            </div>
+          </div>
+
+          {filteredOrders.length === 0 ? (
+            <div className="text-center py-16 space-y-3 bg-stone-50 rounded-2xl border border-stone-200">
+              <Package className="w-12 h-12 text-stone-300 mx-auto" />
+              <p className="text-xs text-stone-500">هنوز سفارشی ثبت نشده است.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="bg-stone-50 border border-stone-200 rounded-2xl p-5 space-y-4 hover:border-stone-300 transition-colors"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-200 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-sm text-[#2D5A27] font-mono">
+                        {order.trackingCode}
+                      </span>
+                      <span className="text-xs bg-white px-2.5 py-0.5 rounded-full border border-stone-200 font-bold text-stone-700">
+                        {order.recipientCity}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-xs text-stone-500">
+                      <span>ثبت: {order.createdAt}</span>
+                      {order.rrn && (
+                        <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-mono font-bold">
+                          RRN: {order.rrn}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Items and Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div>
+                      <span className="font-bold text-stone-800 block mb-1">اقلام خریداری شده:</span>
+                      <ul className="space-y-1 text-stone-600">
+                        {order.items.map((it, idx) => (
+                          <li key={idx} className="flex justify-between">
+                            <span>• {it.product.name} ({toPersianDigits(it.quantity)} عدد)</span>
+                            <span className="font-mono">{(it.product.price * it.quantity).toLocaleString('fa-IR')} ت</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-2 pt-1 border-t border-stone-200 font-bold text-stone-900 flex justify-between">
+                        <span>مبلغ نهایی:</span>
+                        <span className="text-[#2D5A27] font-mono">{order.finalAmount.toLocaleString('fa-IR')} تومان</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="font-bold text-stone-800 block mb-1">مشخصات گیرنده و تحویل:</span>
+                      <p className="text-stone-700">{order.recipientName} ({order.recipientPhone})</p>
+                      <p className="text-stone-500 mt-1">{order.recipientAddress}</p>
+                      <p className="text-stone-600 mt-1 font-medium">زمان: {order.deliveryDate} - {order.deliveryTimeSlot}</p>
+                    </div>
+
+                    <div>
+                      <span className="font-bold text-stone-800 block mb-1">وضعیت جاری سفارش:</span>
+                      <div className="space-y-2">
+                        <select
+                          value={order.status}
+                          onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus, order.recipientPhone, order.trackingCode)}
+                          className="w-full p-2 bg-white border border-stone-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-[#2D5A27]"
+                        >
+                          <option value="paid">تایید پرداخت (شاپرک)</option>
+                          <option value="preparing">در حال گل‌آرایی و آماده‌سازی</option>
+                          <option value="gift_wrapping">بسته‌بندی هدیه و کارت پیام</option>
+                          <option value="delivering">تحویل به پیک (در مسیر ارسال)</option>
+                          <option value="delivered">تحویل نهایی شده</option>
+                        </select>
+
+                        {order.notes && (
+                          <div className="p-2 bg-amber-50 rounded-lg text-amber-900 border border-amber-200">
+                            <strong>توضیحات خریدار:</strong> {order.notes}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 1. Content Editor Sub-Tab */}
+      {activeSubTab === 'content_editor' && (
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-md space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-stone-100 pb-4">
+            <div>
+              <h3 className="text-xl font-bold text-[#1F3F1B] font-heading">
+                ویرایشگر محتوای متنی سایت
+              </h3>
+              <p className="text-xs text-stone-500">
+                تغییر تیتر اصلی صفحه نخست، متن‌های هدر، توضیحات درباره ما و شماره‌های پشتیبانی
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsJsonMode(!isJsonMode)}
-                className="px-3 py-1.5 rounded-xl border border-stone-300 text-xs font-semibold hover:bg-stone-50 cursor-pointer flex items-center gap-1"
+                className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1"
               >
                 <FileCode className="w-3.5 h-3.5" />
-                <span>{isJsonMode ? 'حالت فرم تصویری' : 'حالت کد Raw JSON'}</span>
-              </button>
-
-              <button
-                onClick={handleSaveContent}
-                className="px-4 py-2 bg-[#2D5A27] hover:bg-[#1F3F1B] text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
-              >
-                <Save className="w-4 h-4 text-[#D4AF37]" />
-                <span>ذخیره تغییرات</span>
-              </button>
-
-              <button
-                onClick={resetSiteContent}
-                className="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold rounded-xl cursor-pointer"
-                title="بازگردانی به مقادیر پیش‌فرض"
-              >
-                <RotateCcw className="w-4 h-4" />
+                <span>{isJsonMode ? 'حالت فرم بصری' : 'حالت کد JSON مستقیم'}</span>
               </button>
             </div>
           </div>
 
           {isJsonMode ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <textarea
+                dir="ltr"
+                rows={18}
                 value={jsonString}
                 onChange={(e) => setJsonString(e.target.value)}
-                rows={18}
-                className="w-full bg-stone-900 text-emerald-400 font-mono text-xs p-4 rounded-2xl border border-stone-700 focus:outline-hidden"
-                dir="ltr"
+                className="w-full p-4 bg-stone-900 text-emerald-400 font-mono text-xs rounded-2xl border border-stone-800 focus:outline-none focus:ring-2 focus:ring-[#2D5A27]"
               />
             </div>
           ) : (
             <div className="space-y-6">
-              
-              {/* Hero Section fields */}
-              <div className="space-y-3 bg-stone-50 p-5 rounded-2xl border border-stone-200">
-                <h4 className="font-bold text-sm text-[#2D5A27]">بخش اصلی هیرو (Hero Section)</h4>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Brand Settings */}
+              <div className="bg-stone-50 p-5 rounded-2xl border border-stone-200 space-y-4">
+                <h4 className="font-bold text-sm text-[#2D5A27]">تنظیمات برند و اطلاعات تماس:</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1">عنوان اصلی هیرو:</label>
-                    <input
-                      type="text"
-                      value={draftContent.site.hero.headline}
-                      onChange={(e) => setDraftContent({
-                        ...draftContent,
-                        site: {
-                          ...draftContent.site,
-                          hero: { ...draftContent.site.hero, headline: e.target.value }
-                        }
-                      })}
-                      className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1">متن دکمه خرید:</label>
-                    <input
-                      type="text"
-                      value={draftContent.site.hero.cta_primary}
-                      onChange={(e) => setDraftContent({
-                        ...draftContent,
-                        site: {
-                          ...draftContent.site,
-                          hero: { ...draftContent.site.hero, cta_primary: e.target.value }
-                        }
-                      })}
-                      className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">زیرعنوان توضیحات هیرو:</label>
-                  <textarea
-                    value={draftContent.site.hero.subheadline}
-                    onChange={(e) => setDraftContent({
-                      ...draftContent,
-                      site: {
-                        ...draftContent.site,
-                        hero: { ...draftContent.site.hero, subheadline: e.target.value }
-                      }
-                    })}
-                    rows={2}
-                    className="w-full bg-white border border-stone-200 rounded-xl p-3 text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Brand & Contacts fields */}
-              <div className="space-y-3 bg-stone-50 p-5 rounded-2xl border border-stone-200">
-                <h4 className="font-bold text-sm text-[#2D5A27]">اطلاعات برند و تماس (Brand & Contact)</h4>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1">نام فارسی برند:</label>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">نام فارسی:</label>
                     <input
                       type="text"
                       value={draftContent.site.brand.name_fa}
                       onChange={(e) => setDraftContent({
                         ...draftContent,
-                        site: {
-                          ...draftContent.site,
-                          brand: { ...draftContent.site.brand, name_fa: e.target.value }
-                        }
+                        site: { ...draftContent.site, brand: { ...draftContent.site.brand, name_fa: e.target.value } }
                       })}
-                      className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs"
+                      className="w-full p-2 bg-white border border-stone-300 rounded-lg text-xs font-medium"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1">شماره تلفن پشتیبانی:</label>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">شماره تماس:</label>
                     <input
                       type="text"
+                      dir="ltr"
                       value={draftContent.site.brand.phone}
                       onChange={(e) => setDraftContent({
                         ...draftContent,
-                        site: {
-                          ...draftContent.site,
-                          brand: { ...draftContent.site.brand, phone: e.target.value }
-                        }
+                        site: { ...draftContent.site, brand: { ...draftContent.site.brand, phone: e.target.value } }
                       })}
-                      className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs"
+                      className="w-full p-2 bg-white border border-stone-300 rounded-lg text-xs font-medium"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1">ایمیل رسمی:</label>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">ایمیل رسمی:</label>
                     <input
-                      type="text"
+                      type="email"
+                      dir="ltr"
                       value={draftContent.site.brand.email}
                       onChange={(e) => setDraftContent({
                         ...draftContent,
-                        site: {
-                          ...draftContent.site,
-                          brand: { ...draftContent.site.brand, email: e.target.value }
-                        }
+                        site: { ...draftContent.site, brand: { ...draftContent.site.brand, email: e.target.value } }
                       })}
-                      className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs"
+                      className="w-full p-2 bg-white border border-stone-300 rounded-lg text-xs font-medium"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Story of Brand */}
-              <div className="space-y-3 bg-stone-50 p-5 rounded-2xl border border-stone-200">
-                <h4 className="font-bold text-sm text-[#2D5A27]">داستان دختر گل و درباره ما</h4>
-                <textarea
-                  value={draftContent.site.about.story}
-                  onChange={(e) => setDraftContent({
-                    ...draftContent,
-                    site: {
-                      ...draftContent.site,
-                      about: { ...draftContent.site.about, story: e.target.value }
-                    }
-                  })}
-                  rows={3}
-                  className="w-full bg-white border border-stone-200 rounded-xl p-3 text-xs"
-                />
+              {/* Hero Section */}
+              <div className="bg-stone-50 p-5 rounded-2xl border border-stone-200 space-y-4">
+                <h4 className="font-bold text-sm text-[#2D5A27]">متن بنر اصلی صفحه اول (Hero Banner):</h4>
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">تیتر جذاب اول:</label>
+                  <input
+                    type="text"
+                    value={draftContent.site.hero.headline}
+                    onChange={(e) => setDraftContent({
+                      ...draftContent,
+                      site: { ...draftContent.site, hero: { ...draftContent.site.hero, headline: e.target.value } }
+                    })}
+                    className="w-full p-2.5 bg-white border border-stone-300 rounded-xl text-xs sm:text-sm font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">زیرعنوان توضیحی:</label>
+                  <textarea
+                    rows={2}
+                    value={draftContent.site.hero.subheadline}
+                    onChange={(e) => setDraftContent({
+                      ...draftContent,
+                      site: { ...draftContent.site, hero: { ...draftContent.site.hero, subheadline: e.target.value } }
+                    })}
+                    className="w-full p-2.5 bg-white border border-stone-300 rounded-xl text-xs font-medium"
+                  />
+                </div>
               </div>
-
             </div>
           )}
 
-          {/* Action Row */}
-          <div className="pt-4 border-t border-stone-100 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleDownloadJson}
-                className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>دانلود site-content.json</span>
-              </button>
-
-              <button
-                onClick={handleCopyJson}
-                className="px-3.5 py-2 rounded-xl border border-stone-200 text-stone-700 text-xs font-bold hover:bg-stone-50 flex items-center gap-1.5 cursor-pointer"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'کپی شد' : 'کپی محتوای JSON'}</span>
-              </button>
-            </div>
+          <div className="flex items-center justify-between pt-4 border-t border-stone-200">
+            <button
+              onClick={resetSiteContent}
+              className="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>بازگردانی به تنظیمات پیش‌فرض</span>
+            </button>
 
             <button
               onClick={handleSaveContent}
-              className="px-6 py-2.5 bg-[#2D5A27] hover:bg-[#1F3F1B] text-white text-xs font-bold rounded-xl shadow-md cursor-pointer"
+              className="px-6 py-2.5 bg-[#2D5A27] hover:bg-[#1F3F1B] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-2"
             >
-              ذخیره و اعمال در کل سایت
+              <Save className="w-4 h-4 text-[#D4AF37]" />
+              <span>ذخیره نهایی تغییرات</span>
             </button>
           </div>
-
         </div>
       )}
 
       {/* 2. Add Product Sub-Tab */}
       {activeSubTab === 'add_product' && (
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-md max-w-3xl mx-auto space-y-6">
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-md space-y-6">
           <div className="border-b border-stone-100 pb-3">
             <h3 className="text-xl font-bold text-[#1F3F1B] font-heading">
-              افزودن گل، باکس هدیه یا گیاه جدید به بازارچه
+              افزودن گل، گیاه یا محصول صنایع دستی جدید
             </h3>
             <p className="text-xs text-stone-500">
-              محصول بلافاصله در فیلترها و کاتالوگ فروشگاه قرار می‌گیرد
+              این محصول بلافاصله در بازارچه آنلاین قرار گرفته و قابل سفارش خواهد بود
             </p>
           </div>
 
           <form onSubmit={handleAddProductSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  نام فارسی گل *:
-                </label>
+                <label className="block text-xs font-bold text-stone-700 mb-1">نام محصول (فارسی):</label>
                 <input
                   type="text"
                   required
+                  placeholder="مثال: دسته گل رز هلندی رمانتیک"
                   value={newProd.name}
                   onChange={(e) => setNewProd({ ...newProd, name: e.target.value })}
-                  placeholder="مثال: باکس رز سرخ مینیاتوری"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs focus:bg-white"
+                  className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs sm:text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  نام انگلیسی (اختیاری):
-                </label>
-                <input
-                  type="text"
-                  value={newProd.nameEn}
-                  onChange={(e) => setNewProd({ ...newProd, nameEn: e.target.value })}
-                  placeholder="Royal Red Rose Box"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs focus:bg-white"
-                />
+                <label className="block text-xs font-bold text-stone-700 mb-1">دسته‌بندی:</label>
+                <select
+                  value={newProd.categorySlug}
+                  onChange={(e) => setNewProd({ ...newProd, categorySlug: e.target.value })}
+                  className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs sm:text-sm"
+                >
+                  <option value="roses">گل‌های رز هلندی</option>
+                  <option value="houseplants">گیاهان آپارتمانی</option>
+                  <option value="orchids">ارکیده و لوکس</option>
+                  <option value="gift-baskets">سبد و باکس هدیه</option>
+                  <option value="dried-flowers">گل خشک و جاودان</option>
+                  <option value="pots">گلدان سرامیکی لالجین</option>
+                </select>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  دسته‌بندی *:
-                </label>
-                <select
-                  value={newProd.categorySlug}
-                  onChange={(e) => setNewProd({ ...newProd, categorySlug: e.target.value })}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs focus:bg-white"
-                >
-                  <option value="roses">رزها و باکس گل</option>
-                  <option value="orchids">ارکیده‌های خاص</option>
-                  <option value="sunflowers">آفتابگردان و گل‌های آفتابی</option>
-                  <option value="houseplants">گیاهان آپارتمانی</option>
-                  <option value="gift-baskets">سبد و باکس هدیه لوکس</option>
-                  <option value="seasonal">گل‌های فصلی</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  قیمت (تومان) *:
-                </label>
+                <label className="block text-xs font-bold text-stone-700 mb-1">قیمت (تومان):</label>
                 <input
                   type="number"
                   required
                   value={newProd.price}
                   onChange={(e) => setNewProd({ ...newProd, price: Number(e.target.value) })}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs focus:bg-white"
+                  className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs sm:text-sm font-bold font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  ضمانت شادابی (روز):
-                </label>
+                <label className="block text-xs font-bold text-stone-700 mb-1">ضمانت شادابی (روز):</label>
                 <input
                   type="number"
                   value={newProd.freshnessGuaranteeDays}
                   onChange={(e) => setNewProd({ ...newProd, freshnessGuaranteeDays: Number(e.target.value) })}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs focus:bg-white"
+                  className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs sm:text-sm font-mono"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">سایز و قواره:</label>
+                <select
+                  value={newProd.size}
+                  onChange={(e) => setNewProd({ ...newProd, size: e.target.value as any })}
+                  className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs sm:text-sm"
+                >
+                  <option value="کوچک">کوچک</option>
+                  <option value="متوسط">متوسط</option>
+                  <option value="بزرگ">بزرگ</option>
+                  <option value="لوکس">لوکس و تشریفاتی</option>
+                </select>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                آدرس تصویر (URL):
-              </label>
+              <label className="block text-xs font-bold text-stone-700 mb-1">آدرس اینترنتی تصویر (URL):</label>
               <input
-                type="url"
+                type="text"
+                dir="ltr"
                 required
                 value={newProd.image}
                 onChange={(e) => setNewProd({ ...newProd, image: e.target.value })}
-                className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs focus:bg-white"
+                className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                توضیحات محصول و ترکیبات گل‌ها *:
-              </label>
+              <label className="block text-xs font-bold text-stone-700 mb-1">توضیحات و نمادشناسی گل:</label>
               <textarea
+                rows={3}
                 required
+                placeholder="توضیح کوتاه درباره مناسبت‌ها، شیوه تزیین و نگهداری..."
                 value={newProd.description}
                 onChange={(e) => setNewProd({ ...newProd, description: e.target.value })}
-                rows={3}
-                placeholder="توضیح دهید چند شاخه گل و چه نوع اسفنج و تزییناتی استفاده شده است..."
-                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs focus:bg-white"
+                className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium"
               />
             </div>
 
-            <label className="flex items-center gap-2 text-xs font-bold text-stone-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={newProd.isBestseller}
-                onChange={(e) => setNewProd({ ...newProd, isBestseller: e.target.checked })}
-                className="rounded text-[#2D5A27]"
-              />
-              <span>نمایش نشان ویژه «پرفروش‌ترین»</span>
-            </label>
-
             <button
               type="submit"
-              className="w-full py-3.5 bg-[#2D5A27] hover:bg-[#1F3F1B] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer"
+              className="w-full py-3.5 bg-[#2D5A27] hover:bg-[#1F3F1B] text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              افزودن گل به کاتالوگ فروشگاه
+              <Plus className="w-4 h-4 text-[#D4AF37]" />
+              <span>انتشار آنی محصول در بازارچه</span>
             </button>
           </form>
         </div>
       )}
 
-      {/* 3. Add Blog Article Sub-Tab */}
+      {/* 3. Add Blog Sub-Tab */}
       {activeSubTab === 'add_blog' && (
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-md max-w-3xl mx-auto space-y-6">
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-md space-y-6">
           <div className="border-b border-stone-100 pb-3">
             <h3 className="text-xl font-bold text-[#1F3F1B] font-heading">
-              انتشار مقاله آموزشی در مجله گل آریس
+              انتشار مقاله آموزشی جدید در وبلاگ
             </h3>
             <p className="text-xs text-stone-500">
-              مقاله بلافاصله در مجله و برای خریداران قابل مشاهده خواهد بود
+              آموزش‌های نگهداری گل، دکوراسیون و خواص گیاهان
             </p>
           </div>
 
           <form onSubmit={handleAddBlogSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                عنوان مقاله *:
-              </label>
+              <label className="block text-xs font-bold text-stone-700 mb-1">عنوان مقاله:</label>
               <input
                 type="text"
                 required
+                placeholder="مثال: ۱۰ راز ماندگاری گل‌های شاخه بریده تا دو هفته"
                 value={newPost.title}
                 onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                placeholder="مثال: ۵ راز برای جلوگیری از ریختن گلبرگ‌های پیونی"
-                className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs focus:bg-white"
+                className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs sm:text-sm font-bold"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  نویسنده مقاله:
-                </label>
+                <label className="block text-xs font-bold text-stone-700 mb-1">نویسنده:</label>
                 <input
                   type="text"
                   value={newPost.author}
                   onChange={(e) => setNewPost({ ...newPost, author: e.target.value })}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs focus:bg-white"
+                  className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs"
                 />
               </div>
-
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  برچسب‌ها (با کاما جدا کنید):
-                </label>
+                <label className="block text-xs font-bold text-stone-700 mb-1">برچسب‌ها (با کاما جدا کنید):</label>
                 <input
                   type="text"
                   value={newPost.tags}
                   onChange={(e) => setNewPost({ ...newPost, tags: e.target.value })}
-                  placeholder="نگهداری گل, رز, آموزش"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs focus:bg-white"
+                  className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                خلاصه کوتاه مقاله *:
-              </label>
+              <label className="block text-xs font-bold text-stone-700 mb-1">چکیده مقاله:</label>
               <textarea
+                rows={2}
                 required
                 value={newPost.excerpt}
                 onChange={(e) => setNewPost({ ...newPost, excerpt: e.target.value })}
-                rows={2}
-                placeholder="خلاصه ۲ خطی از موضوع مقاله..."
-                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs focus:bg-white"
+                className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                متن کامل مقاله (Markdown) *:
-              </label>
+              <label className="block text-xs font-bold text-stone-700 mb-1">متن کامل مقاله:</label>
               <textarea
+                rows={6}
                 required
                 value={newPost.content}
                 onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-                rows={8}
-                placeholder="متن کامل با تیترها، نکات و راهکارهای باغبانی..."
-                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs focus:bg-white font-mono text-[11px]"
+                className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3.5 bg-[#2D5A27] hover:bg-[#1F3F1B] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer"
+              className="w-full py-3.5 bg-[#2D5A27] hover:bg-[#1F3F1B] text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              انتشار مقاله در مجله
+              <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+              <span>انتشار مقاله در بلاگ</span>
             </button>
           </form>
         </div>

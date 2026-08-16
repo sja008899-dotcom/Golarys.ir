@@ -12,6 +12,7 @@ import {
   Leaf
 } from 'lucide-react';
 import { toPersianDigits } from '../lib/formatters';
+import { GolarysLogo } from './GolarysLogo';
 
 export const AboutView: React.FC = () => {
   const { siteContent, setActiveTab } = useApp();
@@ -26,9 +27,12 @@ export const AboutView: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 bg-[#2D5A27]/10 text-[#2D5A27] px-4 py-1.5 rounded-full text-xs font-bold">
-                <Heart className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>داستان شکل‌گیری گل آریس</span>
+              <div className="flex items-center gap-3">
+                <GolarysLogo size="sm" iconOnly={true} />
+                <div className="inline-flex items-center gap-2 bg-[#2D5A27]/10 text-[#2D5A27] px-4 py-1.5 rounded-full text-xs font-bold">
+                  <Heart className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>داستان شکل‌گیری گل آریس</span>
+                </div>
               </div>
 
               <h1 className="text-3xl sm:text-4xl font-black text-[#1F3F1B] font-heading leading-tight">

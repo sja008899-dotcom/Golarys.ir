@@ -250,7 +250,7 @@ export const ForSellersView: React.FC = () => {
                 <label className="block text-xs font-bold text-stone-700 mb-2">
                   نوع فعالیت شما چیست؟
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <button
                     type="button"
                     onClick={() => setForm({ ...form, type: 'local_florist' })}
@@ -260,7 +260,7 @@ export const ForSellersView: React.FC = () => {
                         : 'border-stone-200 text-stone-700 hover:bg-stone-50'
                     }`}
                   >
-                    <Building className="w-4 h-4 text-[#D4AF37]" />
+                    <Building className="w-4 h-4 text-[#D4AF37] shrink-0" />
                     <span>گلفروشی تجاری و آتلیه گل</span>
                   </button>
 
@@ -273,8 +273,21 @@ export const ForSellersView: React.FC = () => {
                         : 'border-stone-200 text-stone-700 hover:bg-stone-50'
                     }`}
                   >
-                    <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-                    <span>پرورش‌دهنده خانگی و گلخانه کوچک</span>
+                    <Sparkles className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                    <span>پرورش‌دهنده خانگی گل</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, type: 'artisan' })}
+                    className={`p-3 rounded-2xl text-xs font-bold border text-right cursor-pointer transition-all flex items-center gap-2 ${
+                      form.type === 'artisan'
+                        ? 'border-[#2D5A27] bg-[#2D5A27]/10 text-[#2D5A27] ring-2 ring-[#2D5A27]'
+                        : 'border-stone-200 text-stone-700 hover:bg-stone-50'
+                    }`}
+                  >
+                    <Store className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                    <span>صنایع دستی و گلدان‌ساز هنری</span>
                   </button>
                 </div>
               </div>

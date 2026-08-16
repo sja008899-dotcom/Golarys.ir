@@ -98,10 +98,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </p>
         </div>
 
-        {/* Freshness guarantee pill */}
+        {/* Freshness / Handmade guarantee pill */}
         <div className="flex items-center gap-1 text-[11px] text-[#2D5A27] font-medium pt-1">
           <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
-          <span>ضمانت شادابی {toPersianDigits(product.freshnessGuaranteeDays)} روزه</span>
+          <span>
+            {product.categorySlug === 'handicrafts'
+              ? 'تضمین اصالت اثر و ارسال ضدضربه'
+              : `ضمانت شادابی ${toPersianDigits(product.freshnessGuaranteeDays)} روزه`}
+          </span>
         </div>
 
         {/* Price & Action Row */}

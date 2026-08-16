@@ -14,6 +14,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { toPersianDigits } from '../lib/formatters';
+import { GolarysLogo } from './GolarysLogo';
 
 export const Footer: React.FC = () => {
   const { siteContent, setActiveTab, showToast } = useApp();
@@ -65,8 +66,8 @@ export const Footer: React.FC = () => {
                 <HeartHandshake className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="font-bold text-white text-sm">حمایت از تولیدکنندگان محلی</h4>
-                <p className="text-xs text-stone-400">خرید مستقیم از بانوان و باغبانان خانگی</p>
+                <h4 className="font-bold text-white text-sm">حمایت از هنرمندان و گلفروشان</h4>
+                <p className="text-xs text-stone-400">خرید مستقیم از سفالگران و تولیدکنندگان بومی</p>
               </div>
             </div>
 
@@ -89,21 +90,8 @@ export const Footer: React.FC = () => {
           
           {/* Brand Col */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#2D5A27] to-[#1F3F1B] p-0.5 shadow-md flex items-center justify-center text-white ring-1 ring-[#D4AF37]/40">
-                <Flower2 className="w-6 h-6 text-[#D4AF37]" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl font-black text-white font-heading">
-                    {siteContent.site.brand.name_fa}
-                  </span>
-                  <span className="text-xs font-bold text-[#D4AF37] uppercase bg-[#2D5A27] px-2 py-0.5 rounded">
-                    {siteContent.site.brand.name_en}
-                  </span>
-                </div>
-                <p className="text-xs text-stone-400 font-medium">بازار آنلاین گل و گیاه طبیعی ایران</p>
-              </div>
+            <div className="cursor-pointer" onClick={() => { setActiveTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+              <GolarysLogo size="md" variant="light" />
             </div>
 
             <p className="text-sm text-stone-300 leading-relaxed max-w-md">
@@ -142,8 +130,13 @@ export const Footer: React.FC = () => {
                 </button>
               </li>
               <li>
+                <button onClick={() => { setActiveTab('handicrafts'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-[#D4AF37] transition-colors cursor-pointer font-bold text-amber-200">
+                  صنایع دستی و گلدان‌های هنری 🏺
+                </button>
+              </li>
+              <li>
                 <button onClick={() => { setActiveTab('sellers'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-[#D4AF37] transition-colors cursor-pointer">
-                  ثبت نام فروشندگان و گلفروشان
+                  ثبت نام فروشندگان و هنرمندان
                 </button>
               </li>
               <li>

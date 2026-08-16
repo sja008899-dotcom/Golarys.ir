@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product, CartItem, SiteContent, ActiveTab, BlogPost } from '../types';
+import { Product, CartItem, SiteContent, ActiveTab, BlogPost, User, Order, OrderStatus, DispatchedNotification } from '../types';
 import { initialSiteContent, sampleProducts, sampleBlogPosts } from '../data/initialContent';
 import confetti from 'canvas-confetti';
 
@@ -33,6 +33,8 @@ interface AppContextType {
   setSearchQuery: (query: string) => void;
   quickViewProduct: Product | null;
   setQuickViewProduct: (product: Product | null) => void;
+  selectedProduct: Product | null;
+  setSelectedProduct: (product: Product | null) => void;
   selectedBlogArticle: BlogPost | null;
   setSelectedBlogArticle: (post: BlogPost | null) => void;
   isGiftBuilderOpen: boolean;
@@ -42,6 +44,39 @@ interface AppContextType {
   toasts: Toast[];
   showToast: (message: string, type?: 'success' | 'info' | 'error') => void;
   triggerCelebration: () => void;
+
+  // Real Auth & User Profile
+  user: User | null;
+  loginUser: (phone: string, fullName: string, email?: string, city?: string, address?: string) => void;
+  logoutUser: () => void;
+  updateUserProfile: (updates: Partial<User>) => void;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
+
+  // Real Order & Banking System
+  orders: Order[];
+  createOrder: (orderData: Omit<Order, 'id' | 'trackingCode' | 'createdAt' | 'status'>) => Order;
+  updateOrderStatus: (orderId: string, status: OrderStatus, rrn?: string) => void;
+  findOrderByTracking: (codeOrPhone: string) => Order | undefined;
+  isCheckoutModalOpen: boolean;
+  setIsCheckoutModalOpen: (open: boolean) => void;
+  isTrackingModalOpen: boolean;
+  setIsTrackingModalOpen: (open: boolean) => void;
+  isGatewayOpen: boolean;
+  setIsGatewayOpen: (open: boolean) => void;
+  activeGatewayOrder: Order | null;
+  setActiveGatewayOrder: (order: Order | null) => void;
+
+  // Real Notifications (SMS & Email simulated logs)
+  dispatchedNotifications: DispatchedNotification[];
+  sendNotification: (type: 'sms' | 'email' | 'bank_otp', title: string, message: string, recipient: string) => void;
+  isNotificationsDrawerOpen: boolean;
+  setIsNotificationsDrawerOpen: (open: boolean) => void;
+
+  // Admin Security (Password: 'samane')
+  isAdminAuthenticated: boolean;
+  adminLogin: (password: string) => boolean;
+  adminLogout: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -50,6 +85,10 @@ const LOCAL_STORAGE_CONTENT_KEY = 'golarys_site_content_v1';
 const LOCAL_STORAGE_CART_KEY = 'golarys_cart_v1';
 const LOCAL_STORAGE_PRODUCTS_KEY = 'golarys_products_v1';
 const LOCAL_STORAGE_BLOG_KEY = 'golarys_blog_v1';
+const LOCAL_STORAGE_USER_KEY = 'golarys_user_v1';
+const LOCAL_STORAGE_ORDERS_KEY = 'golarys_orders_v1';
+const LOCAL_STORAGE_NOTIFS_KEY = 'golarys_notifs_v1';
+const LOCAL_STORAGE_ADMIN_AUTH_KEY = 'golarys_admin_auth_v1';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [siteContent, setSiteContent] = useState<SiteContent>(() => {
@@ -57,7 +96,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const saved = localStorage.getItem(LOCAL_STORAGE_CONTENT_KEY);
       if (saved) return JSON.parse(saved);
     } catch {
-      // ignore error
+      // ignore
     }
     return initialSiteContent;
   });
@@ -92,66 +131,259 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     return [];
   });
+
+  // User State
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return null;
+  });
+
+  // Orders State
+  const [orders, setOrders] = useState<Order[]>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_ORDERS_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
+  // Notifications State
+  const [dispatchedNotifications, setDispatchedNotifications] = useState<DispatchedNotification[]>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_NOTIFS_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
+  // Admin Auth State (session/localStorage)
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem(LOCAL_STORAGE_ADMIN_AUTH_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] = useState(false);
+  const [isGatewayOpen, setIsGatewayOpen] = useState(false);
+  const [activeGatewayOrder, setActiveGatewayOrder] = useState<Order | null>(null);
+
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedBlogArticle, setSelectedBlogArticle] = useState<BlogPost | null>(null);
   const [isGiftBuilderOpen, setIsGiftBuilderOpen] = useState(false);
   const [language, setLanguage] = useState<'fa' | 'en'>('fa');
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // Sync with LocalStorage
   useEffect(() => {
     try {
       localStorage.setItem(LOCAL_STORAGE_CONTENT_KEY, JSON.stringify(siteContent));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [siteContent]);
 
   useEffect(() => {
     try {
       localStorage.setItem(LOCAL_STORAGE_CART_KEY, JSON.stringify(cart));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [cart]);
 
   useEffect(() => {
     try {
       localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(products));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [products]);
 
   useEffect(() => {
     try {
       localStorage.setItem(LOCAL_STORAGE_BLOG_KEY, JSON.stringify(blogPosts));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [blogPosts]);
+
+  useEffect(() => {
+    try {
+      if (user) {
+        localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(user));
+      } else {
+        localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
+      }
+    } catch {}
+  }, [user]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(orders));
+    } catch {}
+  }, [orders]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_NOTIFS_KEY, JSON.stringify(dispatchedNotifications));
+    } catch {}
+  }, [dispatchedNotifications]);
 
   const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
+    }, 4500);
   };
 
   const triggerCelebration = () => {
     try {
       confetti({
-        particleCount: 80,
-        spread: 70,
+        particleCount: 90,
+        spread: 80,
         origin: { y: 0.6 },
         colors: ['#2D5A27', '#D4AF37', '#E53E3E', '#F6E05E', '#38A169']
       });
-    } catch {
-      // fallback
+    } catch {}
+  };
+
+  // Notification sender helper (SMS, Email, OTP)
+  const sendNotification = (
+    type: 'sms' | 'email' | 'bank_otp',
+    title: string,
+    message: string,
+    recipient: string
+  ) => {
+    const newNotif: DispatchedNotification = {
+      id: 'notif-' + Date.now() + '-' + Math.random().toString(36).substring(2, 5),
+      type,
+      title,
+      message,
+      recipient,
+      timestamp: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
+      status: 'delivered'
+    };
+    setDispatchedNotifications((prev) => [newNotif, ...prev]);
+  };
+
+  // User Authentication
+  const loginUser = (phone: string, fullName: string, email?: string, city = 'تهران', address?: string) => {
+    const newUser: User = {
+      id: 'usr-' + Date.now(),
+      phone,
+      fullName: fullName || 'کاربر گرامی گل آریس',
+      email: email || '',
+      city: city || 'تهران',
+      address: address || '',
+      isLoggedIn: true,
+      createdAt: new Date().toISOString()
+    };
+    setUser(newUser);
+    showToast(`خوش آمدید، ${newUser.fullName}`, 'success');
+    sendNotification(
+      'sms',
+      'ورود موفق به گل آریس',
+      `کاربر گرامی ${newUser.fullName}، ورود شما به سامانه گل آریس با موفقیت انجام شد.`,
+      phone
+    );
+    if (email) {
+      sendNotification(
+        'email',
+        'خوش‌آمدگویی به خانواده گل آریس',
+        `سلام ${newUser.fullName}، از حضور شما در بازار آنلاین گل و صنایع دستی گل آریس سپاسگزاریم.`,
+        email
+      );
     }
+  };
+
+  const logoutUser = () => {
+    setUser(null);
+    showToast('از حساب کاربری خارج شدید.', 'info');
+  };
+
+  const updateUserProfile = (updates: Partial<User>) => {
+    if (!user) return;
+    const updated = { ...user, ...updates };
+    setUser(updated);
+    showToast('اطلاعات حساب کاربری بروزرسانی شد.', 'success');
+  };
+
+  // Admin authentication with strictly 'samane' password
+  const adminLogin = (password: string): boolean => {
+    if (password.trim() === 'samane') {
+      setIsAdminAuthenticated(true);
+      sessionStorage.setItem(LOCAL_STORAGE_ADMIN_AUTH_KEY, 'true');
+      showToast('ورود موفقیت‌آمیز به پنل مدیریت گل آریس', 'success');
+      return true;
+    } else {
+      showToast('رمز عبور پنل مدیریت اشتباه است!', 'error');
+      return false;
+    }
+  };
+
+  const adminLogout = () => {
+    setIsAdminAuthenticated(false);
+    sessionStorage.removeItem(LOCAL_STORAGE_ADMIN_AUTH_KEY);
+    showToast('از پنل مدیریت خارج شدید.', 'info');
+  };
+
+  // Order Management
+  const createOrder = (orderData: Omit<Order, 'id' | 'trackingCode' | 'createdAt' | 'status'>): Order => {
+    const randomCode = 'GLR-' + Math.floor(100000 + Math.random() * 900000);
+    const newOrder: Order = {
+      ...orderData,
+      id: 'ord-' + Date.now(),
+      trackingCode: randomCode,
+      createdAt: new Date().toLocaleDateString('fa-IR') + ' ' + new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
+      status: orderData.paymentMethod === 'shaparak' ? 'paid' : 'preparing'
+    };
+
+    setOrders((prev) => [newOrder, ...prev]);
+
+    // Send notifications to buyer & recipient
+    sendNotification(
+      'sms',
+      'ثبت سفارش جدید در گل آریس',
+      `سفارش شما با کد پیگیری ${newOrder.trackingCode} به مبلغ ${newOrder.finalAmount.toLocaleString('fa-IR')} تومان ثبت شد و فرآیند آماده‌سازی گل‌ها آغاز گردید.`,
+      newOrder.recipientPhone
+    );
+
+    if (user?.email) {
+      sendNotification(
+        'email',
+        `رسید الکترونیک سفارش ${newOrder.trackingCode}`,
+        `فاکتور رسمی سفارش گل و گیاه شما صادر شد. تاریخ تحویل: ${newOrder.deliveryDate} بازه زمانی: ${newOrder.deliveryTimeSlot}.`,
+        user.email
+      );
+    }
+
+    return newOrder;
+  };
+
+  const updateOrderStatus = (orderId: string, status: OrderStatus, rrn?: string) => {
+    setOrders((prev) =>
+      prev.map((ord) => (ord.id === orderId ? { ...ord, status, ...(rrn ? { rrn } : {}) } : ord))
+    );
+  };
+
+  const findOrderByTracking = (codeOrPhone: string): Order | undefined => {
+    const clean = codeOrPhone.trim().toLowerCase();
+    return orders.find(
+      (o) =>
+        o.trackingCode.toLowerCase() === clean ||
+        o.recipientPhone.replace(/\D/g, '') === clean.replace(/\D/g, '') ||
+        o.id === clean
+    );
   };
 
   const updateSiteContent = (newContent: SiteContent) => {
@@ -212,9 +444,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
     setCart((prev) =>
-      prev.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
-      )
+      prev.map((item) => (item.product.id === productId ? { ...item, quantity } : item))
     );
   };
 
@@ -259,6 +489,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSearchQuery,
         quickViewProduct,
         setQuickViewProduct,
+        selectedProduct,
+        setSelectedProduct,
         selectedBlogArticle,
         setSelectedBlogArticle,
         isGiftBuilderOpen,
@@ -267,7 +499,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setLanguage,
         toasts,
         showToast,
-        triggerCelebration
+        triggerCelebration,
+
+        // Auth
+        user,
+        loginUser,
+        logoutUser,
+        updateUserProfile,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+
+        // Orders & Banking
+        orders,
+        createOrder,
+        updateOrderStatus,
+        findOrderByTracking,
+        isCheckoutModalOpen,
+        setIsCheckoutModalOpen,
+        isTrackingModalOpen,
+        setIsTrackingModalOpen,
+        isGatewayOpen,
+        setIsGatewayOpen,
+        activeGatewayOrder,
+        setActiveGatewayOrder,
+
+        // Real Notifications
+        dispatchedNotifications,
+        sendNotification,
+        isNotificationsDrawerOpen,
+        setIsNotificationsDrawerOpen,
+
+        // Admin Auth
+        isAdminAuthenticated,
+        adminLogin,
+        adminLogout
       }}
     >
       {children}

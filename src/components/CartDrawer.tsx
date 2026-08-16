@@ -27,6 +27,7 @@ export const CartDrawer: React.FC = () => {
     removeFromCart, 
     clearCart,
     setIsGiftBuilderOpen,
+    setIsCheckoutModalOpen,
     showToast,
     triggerCelebration
   } = useApp();
@@ -382,10 +383,13 @@ export const CartDrawer: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setIsCheckingOut(true)}
+              onClick={() => {
+                setIsCartOpen(false);
+                setIsCheckoutModalOpen(true);
+              }}
               className="w-full py-3.5 bg-[#2D5A27] hover:bg-[#1F3F1B] text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>ادامه فرایند خرید و ثبت سفارش</span>
+              <span>تکمیل اطلاعات و پرداخت سفارش</span>
               <ArrowLeft className="w-4 h-4" />
             </button>
           </div>

@@ -13,7 +13,7 @@ export interface Vendor {
   id: string;
   name: string;
   city: string;
-  type: 'local_florist' | 'home_grower'; // گلفروشی محلی یا پرورش‌دهنده خانگی
+  type: 'local_florist' | 'home_grower' | 'artisan'; // گلفروشی محلی، پرورش‌دهنده خانگی یا هنرمند صنایع دستی
   rating: number;
   reviewsCount: number;
   avatar: string;
@@ -146,12 +146,60 @@ export interface SiteContent {
   };
 }
 
-export type ActiveTab = 'home' | 'marketplace' | 'sellers' | 'about' | 'blog' | 'contact' | 'admin';
+export type ActiveTab = 'home' | 'marketplace' | 'handicrafts' | 'sellers' | 'about' | 'blog' | 'contact' | 'admin';
+
+export interface User {
+  id: string;
+  phone: string;
+  email?: string;
+  fullName: string;
+  city: string;
+  address?: string;
+  postalCode?: string;
+  isLoggedIn: boolean;
+  createdAt: string;
+}
+
+export type OrderStatus = 'paid' | 'preparing' | 'gift_wrapping' | 'delivering' | 'delivered' | 'cancelled';
+export type PaymentMethod = 'shaparak' | 'card_to_card' | 'cod';
+
+export interface Order {
+  id: string;
+  trackingCode: string;
+  rrn?: string; // Reference Retrieval Number for Shaparak
+  items: CartItem[];
+  totalAmount: number;
+  shippingCost: number;
+  finalAmount: number;
+  status: OrderStatus;
+  paymentMethod: PaymentMethod;
+  deliveryDate: string;
+  deliveryTimeSlot: string;
+  recipientName: string;
+  recipientPhone: string;
+  recipientAddress: string;
+  recipientCity: string;
+  giftCardMessage?: string;
+  giftCardRecipient?: string;
+  notes?: string;
+  createdAt: string;
+  paidAt?: string;
+}
+
+export interface DispatchedNotification {
+  id: string;
+  type: 'sms' | 'email' | 'bank_otp';
+  title: string;
+  message: string;
+  recipient: string;
+  timestamp: string;
+  status: 'delivered' | 'sent';
+}
 
 export interface VendorApplication {
   fullName: string;
   shopName: string;
-  type: 'local_florist' | 'home_grower';
+  type: 'local_florist' | 'home_grower' | 'artisan';
   city: string;
   phone: string;
   email: string;

@@ -13,25 +13,36 @@ import { ForSellersView } from './components/ForSellersView';
 import { AboutView } from './components/AboutView';
 import { BlogView } from './components/BlogView';
 import { ContactView } from './components/ContactView';
+import { HandicraftsView } from './components/HandicraftsView';
 import { AdminPanel } from './components/AdminPanel';
 import { ProductModal } from './components/ProductModal';
 import { GiftMessageModal } from './components/GiftMessageModal';
 import { CartDrawer } from './components/CartDrawer';
+import { AuthModal } from './components/AuthModal';
+import { CheckoutModal } from './components/CheckoutModal';
+import { ShaparakGatewayModal } from './components/ShaparakGatewayModal';
+import { OrderTrackingModal } from './components/OrderTrackingModal';
+import { NotificationsDrawer } from './components/NotificationsDrawer';
 import { ToastContainer } from './components/ToastContainer';
+import { SEOHead } from './components/SEOHead';
+import { HomeFAQSection } from './components/HomeFAQSection';
 
 const MainContent: React.FC = () => {
-  const { activeTab } = useApp();
+  const { activeTab, selectedProduct } = useApp();
 
   return (
     <main className="min-h-[calc(100vh-200px)]">
+      <SEOHead activeTab={activeTab} selectedProduct={selectedProduct} />
       {activeTab === 'home' && (
         <>
           <HeroSection />
           <MarketplaceView />
+          <HomeFAQSection />
         </>
       )}
 
       {activeTab === 'marketplace' && <MarketplaceView />}
+      {activeTab === 'handicrafts' && <HandicraftsView />}
       {activeTab === 'sellers' && <ForSellersView />}
       {activeTab === 'about' && <AboutView />}
       {activeTab === 'blog' && <BlogView />}
@@ -53,6 +64,11 @@ export default function App() {
         <ProductModal />
         <GiftMessageModal />
         <CartDrawer />
+        <AuthModal />
+        <CheckoutModal />
+        <ShaparakGatewayModal />
+        <OrderTrackingModal />
+        <NotificationsDrawer />
         <ToastContainer />
       </div>
     </AppProvider>

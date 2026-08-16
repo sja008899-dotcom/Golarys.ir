@@ -1,6 +1,6 @@
 {
-  "name": "Golarys - Flower & Plant Marketplace",
-  "description": "Golarys (گل آریس) - A modern marketplace for fresh flowers, indoor plants, bouquets, and local florist vendors with gift personalization and vendor management.",
+  "name": "Golarys - Flower, Plant & Handicrafts Marketplace",
+  "description": "Golarys (گل آریس) - A modern Persian marketplace for fresh flowers, indoor plants, artisanal handicrafts, and local florist vendors with gift personalization and vendor management.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
