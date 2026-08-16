@@ -16,7 +16,9 @@ import {
   Phone, 
   User as UserIcon,
   HelpCircle,
-  FileText
+  FileText,
+  Camera,
+  MessageSquare
 } from 'lucide-react';
 import { PaymentMethod } from '../types';
 import { toPersianDigits } from '../lib/formatters';
@@ -43,6 +45,11 @@ export const CheckoutModal: React.FC = () => {
   const [address, setAddress] = useState(user?.address || '');
   const [postalCode, setPostalCode] = useState(user?.postalCode || '');
   
+  // Pre-dispatch Photo State
+  const [sendPreDispatchPhoto, setSendPreDispatchPhoto] = useState(true);
+  const [preDispatchPhotoChannel, setPreDispatchPhotoChannel] = useState<'sms' | 'whatsapp' | 'telegram'>('sms');
+  const [preDispatchPhotoNumber, setPreDispatchPhotoNumber] = useState(user?.phone || '');
+
   // Delivery Schedule
   const [deliveryDate, setDeliveryDate] = useState('امروز (ارسال فوری ۲ الی ۳ ساعته)');
   const [deliveryTimeSlot, setDeliveryTimeSlot] = useState('بعدازظهر (۱۴:۰۰ الی ۱۸:۰۰)');
@@ -93,7 +100,11 @@ export const CheckoutModal: React.FC = () => {
       recipientPhone,
       recipientAddress: address,
       recipientCity: city,
-      notes: notes || undefined
+      notes: notes || undefined,
+      sendPreDispatchPhoto,
+      preDispatchPhotoChannel,
+      preDispatchPhotoNumber: preDispatchPhotoNumber || recipientPhone,
+      preDispatchPhotoUrl: sendPreDispatchPhoto ? (cart[0]?.product?.image || 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?auto=format&fit=crop&w=800&q=80') : undefined
     });
 
     setIsCheckoutModalOpen(false);
@@ -276,11 +287,105 @@ export const CheckoutModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Step 3: Payment Method */}
+          {/* Step 3: Pre-dispatch Real Photo Inspection */}
+          <div className="space-y-3 pt-2 bg-gradient-to-l from-emerald-50/70 to-amber-50/70 p-4 rounded-2xl border border-emerald-200/80">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#2D5A27] text-white flex items-center justify-center shadow-xs">
+                  <Camera className="w-4 h-4 text-[#D4AF37]" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-stone-900 flex items-center gap-2">
+                    <span>۳. عکاسی و تایید گل‌آرایی قبل از ارسال به پیک</span>
+                    <span className="text-[10px] bg-[#D4AF37] text-[#1F3F1B] px-2 py-0.5 rounded-full font-bold">
+                      ۱۰۰٪ رایگان
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-stone-600 mt-0.5">
+                    گلفروش پس از اتمام دیزاین، عکس واقعی اثر و دسته‌گل را برای شما می‌فرستد تا قبل از ارسال تایید فرمایید.
+                  </p>
+                </div>
+              </div>
+
+              <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                <input
+                  type="checkbox"
+                  checked={sendPreDispatchPhoto}
+                  onChange={(e) => setSendPreDispatchPhoto(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2D5A27]"></div>
+              </label>
+            </div>
+
+            {sendPreDispatchPhoto && (
+              <div className="pt-3 border-t border-emerald-200/60 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    دریافت تصویر از طریق:
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setPreDispatchPhotoChannel('sms')}
+                      className={`py-2 px-1 rounded-xl border text-center transition-all cursor-pointer ${
+                        preDispatchPhotoChannel === 'sms'
+                          ? 'bg-[#2D5A27] text-white border-[#2D5A27]'
+                          : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
+                      }`}
+                    >
+                      پیامک با لینک
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreDispatchPhotoChannel('whatsapp')}
+                      className={`py-2 px-1 rounded-xl border text-center transition-all cursor-pointer ${
+                        preDispatchPhotoChannel === 'whatsapp'
+                          ? 'bg-[#25D366] text-white border-[#25D366]'
+                          : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
+                      }`}
+                    >
+                      واتس‌اپ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreDispatchPhotoChannel('telegram')}
+                      className={`py-2 px-1 rounded-xl border text-center transition-all cursor-pointer ${
+                        preDispatchPhotoChannel === 'telegram'
+                          ? 'bg-[#0088cc] text-white border-[#0088cc]'
+                          : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
+                      }`}
+                    >
+                      تلگرام
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    شماره دریافت عکس (خریدار / سفارش‌دهنده):
+                  </label>
+                  <input
+                    type="tel"
+                    dir="ltr"
+                    placeholder="09123456789"
+                    value={preDispatchPhotoNumber}
+                    onChange={(e) => setPreDispatchPhotoNumber(e.target.value)}
+                    className="w-full p-2 bg-white border border-stone-300 rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#2D5A27]"
+                  />
+                  <span className="text-[10px] text-stone-500 block mt-1">
+                    عکس قبل از تحویل به پیک به این شماره ارسال می‌گردد.
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Step 4: Payment Method */}
           <div className="space-y-3 pt-2">
             <h4 className="text-sm font-black text-stone-900 flex items-center gap-2 border-b border-stone-200 pb-2">
               <CreditCard className="w-4 h-4 text-[#2D5A27]" />
-              <span>۳. روش پرداخت</span>
+              <span>۴. روش پرداخت</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

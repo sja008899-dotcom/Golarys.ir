@@ -11,10 +11,16 @@ import {
   Calendar, 
   MapPin, 
   Phone, 
-  ShieldCheck,
-  FileText,
-  Sparkles,
-  Flower2
+  ShieldCheck, 
+  FileText, 
+  Sparkles, 
+  Flower2,
+  Camera,
+  ThumbsUp,
+  MessageSquare,
+  Eye,
+  Check,
+  AlertCircle
 } from 'lucide-react';
 import { Order, OrderStatus } from '../types';
 import { toPersianDigits } from '../lib/formatters';
@@ -25,11 +31,15 @@ export const OrderTrackingModal: React.FC = () => {
     setIsTrackingModalOpen, 
     orders, 
     findOrderByTracking,
+    approvePreDispatchPhoto,
     showToast
   } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(orders[0] || null);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [showFeedbackInput, setShowFeedbackInput] = useState(false);
+  const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
 
   if (!isTrackingModalOpen) return null;
 
@@ -194,6 +204,153 @@ export const OrderTrackingModal: React.FC = () => {
                 </div>
 
               </div>
+
+              {/* Pre-dispatch Product Photo Inspection Section */}
+              {selectedOrder.sendPreDispatchPhoto && (
+                <div className="bg-gradient-to-br from-amber-500/10 via-emerald-900/5 to-[#2D5A27]/10 border-2 border-[#D4AF37]/50 rounded-2xl p-5 space-y-4 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/60 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-xl bg-[#2D5A27] text-[#D4AF37] flex items-center justify-center shadow-xs">
+                        <Camera className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-stone-900 flex items-center gap-2">
+                          <span>عکس محصول گل‌آرایی شده قبل از ارسال</span>
+                          <span className="text-[10px] bg-[#2D5A27] text-white px-2 py-0.5 rounded-full font-bold">
+                            تضمین تطابق ۱۰۰٪
+                          </span>
+                        </h4>
+                        <p className="text-[11px] text-stone-600">
+                          عکس آماده‌شده توسط گلفروش جهت بررسی و تایید شما قبل از بسته‌بندی نهایی
+                        </p>
+                      </div>
+                    </div>
+
+                    {selectedOrder.preDispatchPhotoApproved ? (
+                      <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 border border-emerald-300">
+                        <Check className="w-3.5 h-3.5" />
+                        تایید شده توسط شما
+                      </span>
+                    ) : (
+                      <span className="bg-amber-100 text-amber-900 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 border border-amber-300 animate-pulse">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        منتظر تایید نهایی شما
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Photo Display Card */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                    <div className="sm:col-span-5 relative group rounded-2xl overflow-hidden border-2 border-white shadow-md aspect-4/3 cursor-pointer bg-stone-900" onClick={() => setIsPhotoZoomed(true)}>
+                      <img
+                        src={selectedOrder.preDispatchPhotoUrl || selectedOrder.items[0]?.product?.image}
+                        alt="عکس واقعی گل قبل از تحویل به پیک"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-xs gap-1.5">
+                        <Eye className="w-4 h-4" />
+                        <span>بزرگ‌نمایی عکس اصلی</span>
+                      </div>
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-xs">
+                        عکاسی شده در گلخانه
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-7 space-y-3">
+                      <div className="text-xs text-stone-700 leading-relaxed bg-white/80 p-3 rounded-xl border border-stone-200">
+                        <p className="font-bold text-[#1F3F1B] mb-1">🌿 گزارش کیفیت گل‌آرایی:</p>
+                        <ul className="space-y-1 text-[11px] text-stone-600 list-disc list-inside">
+                          <li>طراوت ساقه‌ها و شادابی غنچه‌ها بازرسی شد.</li>
+                          <li>کارت پستال و بسته‌بندی ضدضربه آماده شده است.</li>
+                          <li>ارسال با هماهنگی به مقصد: <strong>{selectedOrder.recipientCity}</strong></li>
+                        </ul>
+                      </div>
+
+                      {/* Approval Actions */}
+                      {!selectedOrder.preDispatchPhotoApproved ? (
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => approvePreDispatchPhoto(selectedOrder.id, true)}
+                              className="flex-1 py-2.5 px-4 rounded-xl bg-[#2D5A27] hover:bg-[#1F3F1B] text-white text-xs font-black shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <ThumbsUp className="w-4 h-4 text-[#D4AF37]" />
+                              <span>تایید گل‌آرایی و ارسال به پیک</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setShowFeedbackInput(!showFeedbackInput)}
+                              className="py-2.5 px-3 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                            >
+                              <MessageSquare className="w-4 h-4 text-amber-600" />
+                              <span>درخواست تغییر</span>
+                            </button>
+                          </div>
+
+                          {showFeedbackInput && (
+                            <div className="pt-2 space-y-2">
+                              <textarea
+                                rows={2}
+                                value={feedbackText}
+                                onChange={(e) => setFeedbackText(e.target.value)}
+                                placeholder="مثلاً: لطفاً روبان قرمز اضافه شود یا چینش گل رز متراکم‌تر باشد..."
+                                className="w-full p-2 bg-white border border-amber-300 rounded-xl text-xs focus:ring-2 focus:ring-[#2D5A27] focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!feedbackText.trim()) {
+                                    showToast('لطفاً نظر یا تغییر مورد نظر خود را بنویسید.', 'error');
+                                    return;
+                                  }
+                                  approvePreDispatchPhoto(selectedOrder.id, false, feedbackText);
+                                  setShowFeedbackInput(false);
+                                  setFeedbackText('');
+                                }}
+                                className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                              >
+                                ارسال نظر اصلاحی به گلفروش
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 flex items-center gap-2">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                          <span>شما گل‌آرایی را تایید کرده‌اید. سفارش در حال تحویل به سفیر اسنپ است.</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Lightbox Zoom Modal */}
+              {isPhotoZoomed && (
+                <div 
+                  className="fixed inset-0 z-60 bg-black/90 flex items-center justify-center p-4"
+                  onClick={() => setIsPhotoZoomed(false)}
+                >
+                  <div className="relative max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => setIsPhotoZoomed(false)}
+                      className="absolute -top-12 left-0 p-2 text-white hover:text-amber-400 bg-white/10 rounded-full"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                    <img
+                      src={selectedOrder.preDispatchPhotoUrl || selectedOrder.items[0]?.product?.image}
+                      alt="عکس بزرگنمایی شده گل"
+                      className="w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border-2 border-white/20"
+                    />
+                    <div className="mt-3 text-center text-white text-xs">
+                      عکس با کیفیت بالا ارسالی از کارگاه گل‌آرایی گل آریس
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Order Items Detail */}
               <div className="bg-white border border-stone-200 rounded-2xl p-5 space-y-3">

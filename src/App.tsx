@@ -26,6 +26,7 @@ import { NotificationsDrawer } from './components/NotificationsDrawer';
 import { ToastContainer } from './components/ToastContainer';
 import { SEOHead } from './components/SEOHead';
 import { HomeFAQSection } from './components/HomeFAQSection';
+import { SitemapModal } from './components/SitemapModal';
 
 const MainContent: React.FC = () => {
   const { activeTab, selectedProduct } = useApp();
@@ -52,6 +53,25 @@ const MainContent: React.FC = () => {
   );
 };
 
+const ModalsContainer: React.FC = () => {
+  const { isSitemapModalOpen, setIsSitemapModalOpen } = useApp();
+
+  return (
+    <>
+      <ProductModal />
+      <GiftMessageModal />
+      <CartDrawer />
+      <AuthModal />
+      <CheckoutModal />
+      <ShaparakGatewayModal />
+      <OrderTrackingModal />
+      <NotificationsDrawer />
+      <ToastContainer />
+      <SitemapModal isOpen={isSitemapModalOpen} onClose={() => setIsSitemapModalOpen(false)} />
+    </>
+  );
+};
+
 export default function App() {
   return (
     <AppProvider>
@@ -61,15 +81,7 @@ export default function App() {
         <Footer />
         
         {/* Interactive Modals and Drawers */}
-        <ProductModal />
-        <GiftMessageModal />
-        <CartDrawer />
-        <AuthModal />
-        <CheckoutModal />
-        <ShaparakGatewayModal />
-        <OrderTrackingModal />
-        <NotificationsDrawer />
-        <ToastContainer />
+        <ModalsContainer />
       </div>
     </AppProvider>
   );

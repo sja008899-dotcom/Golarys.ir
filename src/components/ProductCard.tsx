@@ -7,9 +7,10 @@ import {
   Sparkles, 
   Store, 
   ShieldCheck, 
-  Heart,
-  Mail,
-  Truck
+  Heart, 
+  Mail, 
+  Truck,
+  Camera
 } from 'lucide-react';
 import { formatToman, toPersianDigits } from '../lib/formatters';
 
@@ -29,6 +30,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           src={product.image}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+          loading="lazy"
         />
 
         {/* Top Badges */}
@@ -51,10 +53,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           )}
         </div>
 
-        {/* Delivery tag on bottom image */}
-        <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-xs text-white text-[10px] px-2 py-1 rounded-lg flex items-center gap-1">
-          <Truck className="w-3 h-3 text-[#D4AF37]" />
-          <span>ارسال ۲ ساعته اسنپ</span>
+        {/* Delivery & Photo tags on bottom image */}
+        <div className="absolute bottom-2 right-2 left-2 flex items-center justify-between pointer-events-none">
+          <div className="bg-black/70 backdrop-blur-xs text-white text-[10px] px-2 py-1 rounded-lg flex items-center gap-1">
+            <Truck className="w-3 h-3 text-[#D4AF37]" />
+            <span>ارسال ۲ ساعته</span>
+          </div>
+
+          {product.categorySlug !== 'handicrafts' && (
+            <div className="bg-[#1F3F1B]/90 backdrop-blur-xs text-emerald-300 text-[10px] px-2 py-1 rounded-lg flex items-center gap-1">
+              <Camera className="w-3 h-3 text-[#D4AF37]" />
+              <span>عکس قبل ارسال</span>
+            </div>
+          )}
         </div>
 
         {/* Quick View overlay button */}
@@ -63,7 +74,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             e.stopPropagation();
             setQuickViewProduct(product);
           }}
-          className="absolute bottom-2 left-2 p-2 rounded-xl bg-white/90 hover:bg-white text-stone-800 shadow-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          className="absolute top-3 left-3 p-2 rounded-xl bg-white/90 hover:bg-white text-stone-800 shadow-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer pointer-events-auto"
           title="مشاهده سریع جزئیات"
         >
           <Eye className="w-4 h-4" />
@@ -104,7 +115,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <span>
             {product.categorySlug === 'handicrafts'
               ? 'تضمین اصالت اثر و ارسال ضدضربه'
-              : `ضمانت شادابی ${toPersianDigits(product.freshnessGuaranteeDays)} روزه`}
+              : `ضمانت شادابی ${toPersianDigits(product.freshnessGuaranteeDays)} روزه با آب‌رسانی`}
           </span>
         </div>
 
@@ -138,3 +149,4 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     </div>
   );
 };
+

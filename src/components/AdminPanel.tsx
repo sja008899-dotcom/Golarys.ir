@@ -25,7 +25,10 @@ import {
   MapPin,
   ShieldCheck,
   Search,
-  MessageSquare
+  MessageSquare,
+  Camera,
+  Send,
+  Image as ImageIcon
 } from 'lucide-react';
 import { SiteContent, Product, BlogPost, OrderStatus } from '../types';
 import { sampleVendors } from '../data/initialContent';
@@ -46,6 +49,7 @@ export const AdminPanel: React.FC = () => {
     adminLogout,
     orders,
     updateOrderStatus,
+    updateOrder,
     sendNotification
   } = useApp();
 
@@ -471,6 +475,88 @@ export const AdminPanel: React.FC = () => {
                             <strong>توضیحات خریدار:</strong> {order.notes}
                           </div>
                         )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Florist Pre-dispatch Photo Management Box */}
+                  <div className="mt-3 pt-3 border-t border-stone-200 bg-white p-4 rounded-xl space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Camera className="w-4 h-4 text-[#2D5A27]" />
+                        <span className="font-bold text-xs text-stone-800">
+                          سرویس عکاسی محصول قبل از تحویل به پیک:
+                        </span>
+                        {order.sendPreDispatchPhoto ? (
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">
+                            درخواست شده توسط مشتری ({order.preDispatchPhotoChannel === 'whatsapp' ? 'واتس‌اپ' : order.preDispatchPhotoChannel === 'telegram' ? 'تلگرام' : 'پیامک'})
+                          </span>
+                        ) : (
+                          <span className="text-[10px] bg-stone-100 text-stone-600 font-medium px-2 py-0.5 rounded">
+                            اختیاری
+                          </span>
+                        )}
+                      </div>
+
+                      {order.preDispatchPhotoApproved ? (
+                        <span className="text-xs bg-emerald-50 text-emerald-700 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 border border-emerald-200">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          تایید شده توسط مشتری (آماده ارسال به پیک)
+                        </span>
+                      ) : order.preDispatchPhotoFeedback ? (
+                        <span className="text-xs bg-amber-50 text-amber-800 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 border border-amber-200">
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          نظر مشتری: «{order.preDispatchPhotoFeedback}»
+                        </span>
+                      ) : (
+                        <span className="text-xs text-stone-500 font-medium">
+                          وضعیت: در انتظار ارسال عکس یا تایید خریدار
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                      <div className="sm:col-span-3 flex items-center gap-2">
+                        <img
+                          src={order.preDispatchPhotoUrl || order.items[0]?.product?.image}
+                          alt="پیش‌نمایش گل"
+                          className="w-16 h-16 rounded-xl object-cover border border-stone-200 shrink-0"
+                        />
+                        <div className="text-[11px] text-stone-500">
+                          عکس آماده‌شده جهت بازبینی خریدار
+                        </div>
+                      </div>
+
+                      <div className="sm:col-span-6">
+                        <input
+                          type="text"
+                          dir="ltr"
+                          placeholder="آدرس اینترنتی (URL) عکس واقعی گل‌آرایی..."
+                          value={order.preDispatchPhotoUrl || ''}
+                          onChange={(e) => updateOrder(order.id, { preDispatchPhotoUrl: e.target.value })}
+                          className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2D5A27]"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-3 flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const photoUrl = order.preDispatchPhotoUrl || order.items[0]?.product?.image;
+                            updateOrder(order.id, { preDispatchPhotoUrl: photoUrl });
+                            showToast(`عکس گل‌آرایی برای شماره ${order.preDispatchPhotoNumber || order.recipientPhone} ارسال شد.`, 'success');
+                            sendNotification(
+                              'sms',
+                              'عکس گل‌آرایی سفارش شما آماده شد',
+                              `خریدار گرامی، عکس دسته گل/محصول سفارش ${order.trackingCode} جهت تایید نهایی آماده شد. جهت مشاهده و تایید وارد سامانه رهگیری شوید: ${photoUrl}`,
+                              order.preDispatchPhotoNumber || order.recipientPhone
+                            );
+                          }}
+                          className="w-full py-2 px-3 bg-[#2D5A27] hover:bg-[#1F3F1B] text-white text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                        >
+                          <Send className="w-3.5 h-3.5 text-[#D4AF37]" />
+                          <span>ارسال عکس به مشتری</span>
+                        </button>
                       </div>
                     </div>
                   </div>

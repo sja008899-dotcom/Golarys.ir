@@ -11,13 +11,17 @@ import {
   Truck, 
   Sparkles, 
   HeartHandshake,
-  CheckCircle2
+  CheckCircle2,
+  Camera,
+  Compass,
+  CreditCard,
+  Award
 } from 'lucide-react';
 import { toPersianDigits } from '../lib/formatters';
 import { GolarysLogo } from './GolarysLogo';
 
 export const Footer: React.FC = () => {
-  const { siteContent, setActiveTab, showToast } = useApp();
+  const { siteContent, setActiveTab, setIsSitemapModalOpen, showToast } = useApp();
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -40,7 +44,7 @@ export const Footer: React.FC = () => {
       {/* Trust badges bar */}
       <div className="border-b border-[#2D5A27]/60 py-8 bg-[#1F3F1B]/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-2xl bg-[#2D5A27] flex items-center justify-center shrink-0 text-[#D4AF37]">
                 <ShieldCheck className="w-6 h-6" />
@@ -53,31 +57,31 @@ export const Footer: React.FC = () => {
 
             <div className="flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-2xl bg-[#2D5A27] flex items-center justify-center shrink-0 text-[#D4AF37]">
+                <Camera className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-bold text-white text-sm">عکاسی قبل از ارسال</h4>
+                <p className="text-xs text-stone-400">تایید کیفیت گل توسط مشتری قبل تحویل پیک</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-[#2D5A27] flex items-center justify-center shrink-0 text-[#D4AF37]">
                 <Truck className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="font-bold text-white text-sm">ارسال اکسپرس و استاندارد</h4>
-                <p className="text-xs text-stone-400">تحویل ۲ ساعته اسنپ و ارسال تیپاکس</p>
+                <h4 className="font-bold text-white text-sm">ارسال فوری ۲ ساعته</h4>
+                <p className="text-xs text-stone-400">تحویل سریع با اسنپ و بسته‌بندی ایمن</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-2xl bg-[#2D5A27] flex items-center justify-center shrink-0 text-[#D4AF37]">
-                <HeartHandshake className="w-6 h-6" />
+                <CreditCard className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="font-bold text-white text-sm">حمایت از هنرمندان و گلفروشان</h4>
-                <p className="text-xs text-stone-400">خرید مستقیم از سفالگران و تولیدکنندگان بومی</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-[#2D5A27] flex items-center justify-center shrink-0 text-[#D4AF37]">
-                <Sparkles className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-white text-sm">طراحی کارت هدیه رایگان</h4>
-                <p className="text-xs text-stone-400">نگارش پیام اختصاصی با مهر و موم</p>
+                <h4 className="font-bold text-white text-sm">پرداخت امن شاپرک</h4>
+                <p className="text-xs text-stone-400">درگاه رسمی بانکی شتاب با رمزپویا</p>
               </div>
             </div>
           </div>
@@ -95,7 +99,7 @@ export const Footer: React.FC = () => {
             </div>
 
             <p className="text-sm text-stone-300 leading-relaxed max-w-md">
-              {siteContent.site.about.story.slice(0, 180)}...
+              {siteContent.site.brand.tagline_fa}. پلتفرم خرید مستقیم گل و گیاه تازه از گلخانه‌داران محلات و گلدان‌های سرامیکی دست‌ساز لالجین با عکاسی اختصاصی و تضمین ماندگاری.
             </p>
 
             <div className="flex items-center gap-3 pt-2">
@@ -117,6 +121,14 @@ export const Footer: React.FC = () => {
               >
                 <Send className="w-5 h-5" />
               </a>
+              <button
+                onClick={() => setIsSitemapModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-[#2D5A27]/80 hover:bg-[#D4AF37] hover:text-[#172E14] text-stone-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                title="مشاهده نقشه کامل سایت و سئو"
+              >
+                <Compass className="w-4 h-4 text-[#D4AF37]" />
+                <span>نقشه سایت و سئو (Sitemap)</span>
+              </button>
             </div>
           </div>
 
@@ -131,7 +143,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button onClick={() => { setActiveTab('handicrafts'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-[#D4AF37] transition-colors cursor-pointer font-bold text-amber-200">
-                  صنایع دستی و گلدان‌های هنری 🏺
+                  صنایع دستی و سفال لالجین 🏺
                 </button>
               </li>
               <li>
@@ -150,8 +162,8 @@ export const Footer: React.FC = () => {
                 </button>
               </li>
               <li>
-                <button onClick={() => { setActiveTab('admin'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-[#D4AF37] transition-colors cursor-pointer">
-                  پنل مدیریت محتوای سایت
+                <button onClick={() => { setIsSitemapModalOpen(true); }} className="hover:text-[#D4AF37] text-emerald-400 font-bold transition-colors cursor-pointer flex items-center gap-1">
+                  <span>ساختار سئو و XML نقشه</span>
                 </button>
               </li>
             </ul>
@@ -179,7 +191,7 @@ export const Footer: React.FC = () => {
 
           {/* Contact & Newsletter Col */}
           <div className="space-y-4">
-            <h4 className="text-white font-bold text-base border-b border-[#2D5A27] pb-2 font-heading">تماس و خبرنامه</h4>
+            <h4 className="text-white font-bold text-base border-b border-[#2D5A27] pb-2 font-heading">تماس و نمادها</h4>
             <div className="space-y-2 text-xs text-stone-300">
               <p className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-[#D4AF37] shrink-0" />
@@ -195,6 +207,20 @@ export const Footer: React.FC = () => {
                   {siteContent.site.brand.address || 'تهران، خیابان ولیعصر، برج نیلوفر'}
                 </span>
               </p>
+            </div>
+
+            {/* Official e-commerce trust seals */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <div className="bg-white/10 p-2.5 rounded-xl border border-white/15 text-center flex flex-col items-center justify-center">
+                <Award className="w-5 h-5 text-[#D4AF37] mb-1" />
+                <span className="text-[10px] font-bold text-stone-200">نماد اعتماد الکترونیکی</span>
+                <span className="text-[9px] text-stone-400">اینماد ۵ ستاره</span>
+              </div>
+              <div className="bg-white/10 p-2.5 rounded-xl border border-white/15 text-center flex flex-col items-center justify-center">
+                <ShieldCheck className="w-5 h-5 text-emerald-400 mb-1" />
+                <span className="text-[10px] font-bold text-stone-200">درگاه امن شاپرک</span>
+                <span className="text-[9px] text-stone-400">تراکنش شتاب</span>
+              </div>
             </div>
 
             <form onSubmit={handleSubscribe} className="pt-2">
@@ -223,7 +249,7 @@ export const Footer: React.FC = () => {
           <p>© {toPersianDigits('1403')} تمامی حقوق برای بازار آنلاین گل و گیاه <strong>{siteContent.site.brand.name_fa} ({siteContent.site.brand.name_en})</strong> محفوظ است.</p>
           <div className="flex items-center gap-4 text-[11px]">
             <span>طراحی با عشق به طبیعت و گل‌های ایران 🌸</span>
-            <span>نسخه ZIP-Ready</span>
+            <span className="text-emerald-400 font-bold">SEO Grade A+</span>
           </div>
         </div>
       </div>

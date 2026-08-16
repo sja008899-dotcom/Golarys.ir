@@ -57,6 +57,8 @@ interface AppContextType {
   orders: Order[];
   createOrder: (orderData: Omit<Order, 'id' | 'trackingCode' | 'createdAt' | 'status'>) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus, rrn?: string) => void;
+  updateOrder: (orderId: string, updates: Partial<Order>) => void;
+  approvePreDispatchPhoto: (orderId: string, approved: boolean, feedback?: string) => void;
   findOrderByTracking: (codeOrPhone: string) => Order | undefined;
   isCheckoutModalOpen: boolean;
   setIsCheckoutModalOpen: (open: boolean) => void;
@@ -72,6 +74,10 @@ interface AppContextType {
   sendNotification: (type: 'sms' | 'email' | 'bank_otp', title: string, message: string, recipient: string) => void;
   isNotificationsDrawerOpen: boolean;
   setIsNotificationsDrawerOpen: (open: boolean) => void;
+
+  // SEO & Sitemap Modal
+  isSitemapModalOpen: boolean;
+  setIsSitemapModalOpen: (open: boolean) => void;
 
   // Admin Security (Password: 'samane')
   isAdminAuthenticated: boolean;
@@ -179,6 +185,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] = useState(false);
+  const [isSitemapModalOpen, setIsSitemapModalOpen] = useState(false);
   const [isGatewayOpen, setIsGatewayOpen] = useState(false);
   const [activeGatewayOrder, setActiveGatewayOrder] = useState<Order | null>(null);
 
@@ -376,6 +383,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  const updateOrder = (orderId: string, updates: Partial<Order>) => {
+    setOrders((prev) =>
+      prev.map((ord) => (ord.id === orderId ? { ...ord, ...updates } : ord))
+    );
+  };
+
+  const approvePreDispatchPhoto = (orderId: string, approved: boolean, feedback?: string) => {
+    setOrders((prev) =>
+      prev.map((ord) => {
+        if (ord.id !== orderId) return ord;
+        return {
+          ...ord,
+          preDispatchPhotoApproved: approved,
+          preDispatchPhotoFeedback: feedback,
+          status: approved ? 'gift_wrapping' : ord.status
+        };
+      })
+    );
+
+    const target = orders.find((o) => o.id === orderId);
+    if (target) {
+      if (approved) {
+        showToast('عکس گل‌آرایی تایید شد! سفارش جهت بسته‌بندی نهایی و تحویل به پیک ارسال گردید.', 'success');
+        sendNotification(
+          'sms',
+          'تایید گل‌آرایی توسط خریدار',
+          `خریدار گرامی، تاییدیه گل‌آرایی سفارش ${target.trackingCode} با موفقیت ثبت شد و بسته جهت ارسال به پیک مجهز تحویل شد.`,
+          target.recipientPhone
+        );
+      } else {
+        showToast('نظر شما برای اصلاح و تغییر گل‌آرایی به گلفروش ارسال شد.', 'info');
+        sendNotification(
+          'sms',
+          'درخواست اصلاح گل‌آرایی',
+          `درخواست شما: «${feedback || 'اصلاح گل‌آرایی'}» برای سفارش ${target.trackingCode} ثبت شد. گلفروش پس از تغییرات عکس جدید ارسال خواهد کرد.`,
+          target.recipientPhone
+        );
+      }
+    }
+  };
+
   const findOrderByTracking = (codeOrPhone: string): Order | undefined => {
     const clean = codeOrPhone.trim().toLowerCase();
     return orders.find(
@@ -513,6 +561,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         orders,
         createOrder,
         updateOrderStatus,
+        updateOrder,
+        approvePreDispatchPhoto,
         findOrderByTracking,
         isCheckoutModalOpen,
         setIsCheckoutModalOpen,
@@ -528,6 +578,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         sendNotification,
         isNotificationsDrawerOpen,
         setIsNotificationsDrawerOpen,
+
+        // SEO & Sitemap
+        isSitemapModalOpen,
+        setIsSitemapModalOpen,
 
         // Admin Auth
         isAdminAuthenticated,
