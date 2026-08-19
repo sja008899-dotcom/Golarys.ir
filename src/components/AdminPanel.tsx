@@ -1527,7 +1527,7 @@ export const AdminPanel: React.FC = () => {
               <div className="bg-stone-800/80 p-4 rounded-xl space-y-2 border border-stone-700">
                 <p className="font-bold text-[#D4AF37]">آدرس دریافت‌کننده خودکار:</p>
                 <div className="bg-black/50 p-2.5 rounded-lg font-mono text-emerald-400 flex items-center justify-between" dir="ltr">
-                  <span>{content.site.brand.email}</span>
+                  <span>{siteContent.site.brand.email}</span>
                   <span className="text-[10px] text-stone-400">Target</span>
                 </div>
                 <p className="text-stone-300 text-[11px]">
@@ -1554,7 +1554,7 @@ export const AdminPanel: React.FC = () => {
               </div>
               <div className="bg-white p-3.5 rounded-xl border border-emerald-100 space-y-1">
                 <span className="font-bold text-[#2D5A27] block">۳. تایید کد در ایمیل</span>
-                <p className="text-[11px] text-stone-600">ایمیل مدیر ({content.site.brand.email}) را باز کنید، کد ۶ رقمی ارسالی از اینماد را برداشته و در اینماد تایید کنید.</p>
+                <p className="text-[11px] text-stone-600">ایمیل مدیر ({siteContent.site.brand.email}) را باز کنید، کد ۶ رقمی ارسالی از اینماد را برداشته و در اینماد تایید کنید.</p>
               </div>
             </div>
           </div>
