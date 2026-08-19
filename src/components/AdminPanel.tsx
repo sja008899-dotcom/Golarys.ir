@@ -35,7 +35,9 @@ import {
   Image as ImageIcon,
   Mail,
   Inbox,
-  Trash2
+  Trash2,
+  Smartphone,
+  DownloadCloud
 } from 'lucide-react';
 import { SiteContent, Product, BlogPost, OrderStatus, ContactMessage } from '../types';
 import { sampleVendors } from '../data/initialContent';
