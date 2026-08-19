@@ -472,6 +472,18 @@ export const AdminPanel: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveSubTab('mobile_app')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            activeSubTab === 'mobile_app'
+              ? 'bg-[#2D5A27] text-white shadow-xs'
+              : 'bg-indigo-50 text-indigo-900 border border-indigo-300 hover:bg-indigo-100 font-bold'
+          }`}
+        >
+          <Smartphone className="w-4 h-4 text-indigo-600" />
+          <span>اپلیکیشن‌های موبایل (Android/iOS) 📱</span>
+        </button>
+
+        <button
           onClick={() => setActiveSubTab('github_sync')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
             activeSubTab === 'github_sync'
@@ -1729,6 +1741,73 @@ echo "Done. Created \${OUT}"`}
         </div>
       )}
 
+      {/* 7. Mobile App Builder Sub-Tab */}
+      {activeSubTab === 'mobile_app' && (
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-md space-y-6">
+          <div className="border-b border-stone-100 pb-3">
+            <h3 className="text-xl font-bold text-[#1F3F1B] font-heading flex items-center gap-2">
+              <Smartphone className="w-5 h-5 text-[#D4AF37]" />
+              <span>ساخت و دانلود اپلیکیشن موبایل (اندروید و iOS)</span>
+            </h3>
+            <p className="text-xs text-stone-500 mt-1">
+              پروژه شما به سیستم قدرتمند Capacitor مجهز شده و کدهای بومی اپلیکیشن‌های اندروید و اپل آن مستقیماً در گیت‌هاب سایتتان ذخیره شده است.
+            </p>
+          </div>
+
+          <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-2xl flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="space-y-2">
+              <h4 className="font-bold text-emerald-900 flex items-center gap-2">
+                <DownloadCloud className="w-4 h-4" />
+                تبدیل رایگان به اپلیکیشن با Appflow (توصیه شده)
+              </h4>
+              <p className="text-xs text-emerald-700 leading-relaxed max-w-2xl">
+                بدون نیاز به نصب هیچ نرم‌افزاری روی کامپیوترتان! 
+                کافیست در سرویس <strong className="bg-emerald-100 px-1 rounded">Appflow</strong> ثبت‌نام کنید، گیت‌هاب گل آریس را به آن متصل کنید و دکمه Build را بزنید. 
+                این سرویس، فایل نصب اندروید (<code className="font-mono">.apk</code> / <code className="font-mono">.aab</code>) و آیفون (<code className="font-mono">.ipa</code>) را آماده تحویل می‌دهد.
+              </p>
+            </div>
+            <a 
+              href="https://ionic.io/appflow" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors shrink-0 whitespace-nowrap text-center"
+            >
+              ورود به Appflow<br/>
+              <span className="text-[10px] opacity-80 font-normal">ionic.io/appflow</span>
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="border border-stone-200 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center gap-3 border-b border-stone-100 pb-3">
+                <div className="bg-green-100 p-2 rounded-lg text-green-700">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h4 className="font-bold text-stone-800">خروجی اندروید (Android)</h4>
+              </div>
+              <ul className="text-xs text-stone-600 space-y-2 list-disc list-inside">
+                <li>ساخت فایل <strong className="text-green-700 font-mono">.aab</strong> استاندارد برای گوگل پلی و مایکت</li>
+                <li>ساخت فایل <strong className="text-green-700 font-mono">.apk</strong> برای دانلود مستقیم سایت و کانال تلگرام</li>
+                <li>کدنویسی شده با Java و Kotlin بومی</li>
+              </ul>
+            </div>
+
+            <div className="border border-stone-200 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center gap-3 border-b border-stone-100 pb-3">
+                <div className="bg-stone-100 p-2 rounded-lg text-stone-700">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>
+                </div>
+                <h4 className="font-bold text-stone-800">خروجی اپل (iOS)</h4>
+              </div>
+              <ul className="text-xs text-stone-600 space-y-2 list-disc list-inside">
+                <li>ساخت فایل <strong className="text-stone-700 font-mono">.ipa</strong> برای انتشار در App Store و سیب اپ</li>
+                <li>طراحی یکپارچه بر اساس کدهای Swift</li>
+                <li>نیازمند اتصال به اکانت توسعه‌دهنده Apple در Appflow</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
