@@ -1756,26 +1756,24 @@ echo "Done. Created \${OUT}"`}
             </p>
           </div>
 
-          <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-2xl flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="bg-indigo-50 border border-indigo-200 p-5 rounded-2xl flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="space-y-2">
-              <h4 className="font-bold text-emerald-900 flex items-center gap-2">
+              <h4 className="font-bold text-indigo-900 flex items-center gap-2">
                 <DownloadCloud className="w-4 h-4" />
-                تبدیل رایگان به اپلیکیشن با Appflow (توصیه شده)
+                ساده‌ترین روش: دانلود مستقیم با PWABuilder (پیشنهاد ویژه)
               </h4>
-              <p className="text-xs text-emerald-700 leading-relaxed max-w-2xl">
-                بدون نیاز به نصب هیچ نرم‌افزاری روی کامپیوترتان! 
-                کافیست در سرویس <strong className="bg-emerald-100 px-1 rounded">Appflow</strong> ثبت‌نام کنید، گیت‌هاب گل آریس را به آن متصل کنید و دکمه Build را بزنید. 
-                این سرویس، فایل نصب اندروید (<code className="font-mono">.apk</code> / <code className="font-mono">.aab</code>) و آیفون (<code className="font-mono">.ipa</code>) را آماده تحویل می‌دهد.
+              <p className="text-xs text-indigo-800 leading-relaxed max-w-2xl">
+                سایت شما کاملاً به عنوان یک PWA استاندارد برنامه‌نویسی شده است. برای دریافت فایل اندروید، کافیست وارد سایت مایکروسافت (PWABuilder) شوید، آدرس سایت خود (<strong>https://golarys.ir</strong>) را وارد کنید و دکمه <strong>Package for Android</strong> را بزنید تا فایل <code className="font-mono">.apk</code> به شما تحویل داده شود.
               </p>
             </div>
             <a 
-              href="https://ionic.io/appflow" 
+              href="https://www.pwabuilder.com/" 
               target="_blank" 
               rel="noreferrer"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors shrink-0 whitespace-nowrap text-center"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors shrink-0 whitespace-nowrap text-center"
             >
-              ورود به Appflow<br/>
-              <span className="text-[10px] opacity-80 font-normal">ionic.io/appflow</span>
+              ساخت فوری اپلیکیشن<br/>
+              <span className="text-[10px] opacity-80 font-normal">از سایت PWABuilder</span>
             </a>
           </div>
 
