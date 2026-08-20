@@ -1760,21 +1760,19 @@ echo "Done. Created \${OUT}"`}
             <div className="space-y-2">
               <h4 className="font-bold text-indigo-900 flex items-center gap-2">
                 <DownloadCloud className="w-4 h-4" />
-                تبدیل فوری به اپلیکیشن (بدون نیاز به گیت‌هاب)
+                دریافت سورس استاندارد اپلیکیشن (بدون هیچ‌گونه تبلیغات)
               </h4>
               <p className="text-xs text-indigo-800 leading-relaxed max-w-2xl">
-                برای دریافت فایل اندروید (بدون خطای گیت‌هاب)، کافیست وارد سایت <strong>WebIntoApp</strong> شوید، آدرس سایت خود (<strong>https://golarys.ir</strong>) را وارد کنید و دکمه <strong>Make App</strong> را بزنید تا فایل <code className="font-mono">.apk</code> در چند ثانیه به شما تحویل داده شود.
+                برای داشتن یک اپلیکیشن ۱۰۰٪ اختصاصی و بدون نام و نشان سایت‌های واسطه، هسته اصلی سایت شما با تکنولوژی <strong>Capacitor</strong> برنامه‌نویسی شده است. کافیست فایل زیپ سایت را دانلود کنید، آن را در <strong>Android Studio</strong> باز کرده و یک خروجی فایل <code className="font-mono">.apk</code> استاندارد بگیرید.
               </p>
             </div>
-            <a 
-              href="https://www.webintoapp.com/" 
-              target="_blank" 
-              rel="noreferrer"
+            <button 
+              onClick={() => setActiveSubTab('zip_builder')}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors shrink-0 whitespace-nowrap text-center"
             >
-              ساخت فوری اپلیکیشن<br/>
-              <span className="text-[10px] opacity-80 font-normal">سایت WebIntoApp</span>
-            </a>
+              مراحل دانلود سورس<br/>
+              <span className="text-[10px] opacity-80 font-normal">کاملاً اختصاصی و White-label</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
