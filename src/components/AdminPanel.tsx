@@ -1760,20 +1760,20 @@ echo "Done. Created \${OUT}"`}
             <div className="space-y-2">
               <h4 className="font-bold text-indigo-900 flex items-center gap-2">
                 <DownloadCloud className="w-4 h-4" />
-                ساده‌ترین روش: دانلود مستقیم با PWABuilder (پیشنهاد ویژه)
+                تبدیل فوری به اپلیکیشن (بدون نیاز به گیت‌هاب)
               </h4>
               <p className="text-xs text-indigo-800 leading-relaxed max-w-2xl">
-                سایت شما کاملاً به عنوان یک PWA استاندارد برنامه‌نویسی شده است. برای دریافت فایل اندروید، کافیست وارد سایت مایکروسافت (PWABuilder) شوید، آدرس سایت خود (<strong>https://golarys.ir</strong>) را وارد کنید و دکمه <strong>Package for Android</strong> را بزنید تا فایل <code className="font-mono">.apk</code> به شما تحویل داده شود.
+                برای دریافت فایل اندروید (بدون خطای گیت‌هاب)، کافیست وارد سایت <strong>WebIntoApp</strong> شوید، آدرس سایت خود (<strong>https://golarys.ir</strong>) را وارد کنید و دکمه <strong>Make App</strong> را بزنید تا فایل <code className="font-mono">.apk</code> در چند ثانیه به شما تحویل داده شود.
               </p>
             </div>
             <a 
-              href="https://www.pwabuilder.com/" 
+              href="https://www.webintoapp.com/" 
               target="_blank" 
               rel="noreferrer"
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors shrink-0 whitespace-nowrap text-center"
             >
               ساخت فوری اپلیکیشن<br/>
-              <span className="text-[10px] opacity-80 font-normal">از سایت PWABuilder</span>
+              <span className="text-[10px] opacity-80 font-normal">سایت WebIntoApp</span>
             </a>
           </div>
 
